@@ -113,6 +113,24 @@ body::after {
   margin-top: 4px;
   font-weight: 500;
 }
+.header { position: relative; }
+.sound-toggle {
+  position: absolute;
+  top: 24px;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--gray-100);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.sound-toggle.muted { opacity: 0.4; }
 
 /* Screen transitions */
 .screen { display: none; animation: fadeIn 0.3s ease; }
@@ -1402,6 +1420,7 @@ body::after {
   <div id="screen-dashboard" class="screen">
     <div class="header">
       <h1>📝 田中の一問一答</h1>
+      <button class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</button>
     </div>
     <!-- Deck selector -->
     <div class="deck-selector">
@@ -1608,6 +1627,125 @@ const LEVELS = {
   mastered: { label: '覚えた', badge: 'badge-mastered' }
 };
 
+// ============ AUDIO SYSTEM ============
+let audioCtx = null;
+let audioEnabled = false;
+let soundMuted = localStorage.getItem('mikan_muted') === 'true';
+
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioEnabled = true;
+  } catch(e) { audioEnabled = false; }
+}
+
+function toggleSound() {
+  soundMuted = !soundMuted;
+  localStorage.setItem('mikan_muted', soundMuted);
+  const btn = document.getElementById('soundToggle');
+  btn.textContent = soundMuted ? '🔇' : '🔊';
+  btn.classList.toggle('muted', soundMuted);
+  if (!soundMuted) { initAudio(); sfxTap(); }
+}
+
+// Initialize toggle button state
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('soundToggle');
+  if (btn) {
+    btn.textContent = soundMuted ? '🔇' : '🔊';
+    btn.classList.toggle('muted', soundMuted);
+  }
+});
+
+// Unlock audio on first user interaction (required for iOS)
+document.addEventListener('touchstart', initAudio, { once: true });
+document.addEventListener('click', initAudio, { once: true });
+
+function playTone(freq, duration, type, vol) {
+  if (soundMuted || !audioCtx || !audioEnabled) return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.value = freq;
+  gain.gain.value = vol || 0.15;
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (duration || 0.2));
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + (duration || 0.2));
+}
+
+// Sound effects
+function sfxTap() { playTone(800, 0.08, 'sine', 0.1); }
+function sfxSelect() { playTone(600, 0.06, 'sine', 0.08); playTone(900, 0.06, 'sine', 0.08); }
+function sfxCorrect() {
+  playTone(523, 0.12, 'sine', 0.15);
+  setTimeout(() => playTone(659, 0.12, 'sine', 0.15), 80);
+  setTimeout(() => playTone(784, 0.18, 'sine', 0.15), 160);
+}
+function sfxWrong() {
+  playTone(300, 0.15, 'square', 0.08);
+  setTimeout(() => playTone(250, 0.2, 'square', 0.08), 120);
+}
+function sfxReveal() { playTone(440, 0.1, 'triangle', 0.1); }
+function sfxBookmark() {
+  playTone(700, 0.08, 'sine', 0.1);
+  setTimeout(() => playTone(1050, 0.12, 'sine', 0.12), 60);
+}
+function sfxStart() {
+  playTone(523, 0.1, 'sine', 0.12);
+  setTimeout(() => playTone(659, 0.1, 'sine', 0.12), 100);
+  setTimeout(() => playTone(784, 0.1, 'sine', 0.12), 200);
+  setTimeout(() => playTone(1047, 0.2, 'sine', 0.15), 300);
+}
+function sfxComplete() {
+  [523, 659, 784, 1047].forEach((f, i) => {
+    setTimeout(() => playTone(f, 0.2, 'sine', 0.12), i * 120);
+  });
+  setTimeout(() => {
+    [1047, 1319, 1568].forEach((f, i) => {
+      setTimeout(() => playTone(f, 0.25, 'sine', 0.1), i * 100);
+    });
+  }, 500);
+}
+function sfxBack() { playTone(500, 0.06, 'sine', 0.06); }
+
+// ============ TTS (Text-to-Speech) ============
+function speakEN(text) {
+  if (soundMuted || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  u.rate = 0.9;
+  u.volume = 0.8;
+  // Try to find English voice
+  const voices = window.speechSynthesis.getVoices();
+  const enVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Samantha'))
+    || voices.find(v => v.lang.startsWith('en-US'))
+    || voices.find(v => v.lang.startsWith('en'));
+  if (enVoice) u.voice = enVoice;
+  window.speechSynthesis.speak(u);
+}
+function speakJP(text) {
+  if (soundMuted || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ja-JP';
+  u.rate = 0.9;
+  u.volume = 0.8;
+  const voices = window.speechSynthesis.getVoices();
+  const jpVoice = voices.find(v => v.lang.startsWith('ja'));
+  if (jpVoice) u.voice = jpVoice;
+  window.speechSynthesis.speak(u);
+}
+// Preload voices
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
 function getActiveDeck() {
   return decks.find(d => d.id === activeDeckId) || null;
 }
@@ -1792,6 +1930,7 @@ function renderDeckList() {
 }
 
 function selectDeck(id) {
+  sfxSelect();
   activeDeckId = id;
   saveState();
   renderDeckList();
@@ -1850,6 +1989,7 @@ function escapeHtml(str) {
 
 // ============ SCREENS ============
 function showScreen(name) {
+  sfxTap();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${name}`).classList.add('active');
 }
@@ -1950,6 +2090,7 @@ function startMissedReview() {
   };
 
   showScreen('quiz');
+  sfxStart();
   showQuizQuestion();
 } // false = normal, true = drill
 
@@ -2052,6 +2193,7 @@ function startQuiz() {
   };
 
   showScreen('quiz');
+  sfxStart();
   showQuizQuestion();
 }
 
@@ -2075,6 +2217,8 @@ function showQuizQuestion() {
   badge.textContent = levelInfo.label;
   badge.className = `level-badge ${levelInfo.badge}`;
   document.getElementById('quizWord').textContent = word.english;
+  // Read the question word aloud
+  speakEN(word.english);
 
   // Reset card state
   const card = document.getElementById('quizCard');
@@ -2115,6 +2259,12 @@ function revealAnswer() {
   const card = document.getElementById('quizCard');
   if (card.classList.contains('revealed')) return;
   card.classList.add('revealed');
+  sfxReveal();
+  // Read the answer aloud
+  if (currentQuiz) {
+    const word = currentQuiz.words[currentQuiz.index];
+    setTimeout(() => speakJP(word.japanese), 200);
+  }
   // Enable the know/don't-know buttons
   const btns = document.getElementById('knowButtons');
   if (btns) {
@@ -2126,6 +2276,7 @@ function revealAnswer() {
 function toggleBookmark() {
   const word = currentQuiz.words[currentQuiz.index];
   word.bookmarked = !word.bookmarked;
+  sfxBookmark();
   const btn = document.getElementById('bookmarkBtn');
   btn.classList.toggle('active', word.bookmarked);
   saveState();
@@ -2144,6 +2295,7 @@ function answerKnowledge(known) {
   const word = currentQuiz.words[currentQuiz.index];
 
   if (known) {
+    sfxCorrect();
     currentQuiz.correct++;
     if (!reviewMode) {
       if (word.level === 'unlearned') {
@@ -2160,6 +2312,7 @@ function answerKnowledge(known) {
     currentQuiz.results.push({ word, correct: true });
     if (quizDrillMode) currentQuiz.masteredCount++;
   } else {
+    sfxWrong();
     currentQuiz.wrong++;
     if (!reviewMode) {
       word.level = 'weak';
@@ -2188,6 +2341,7 @@ function answerChoice(btn, index, isCorrect) {
 
   if (isCorrect) {
     btn.classList.add('correct');
+    sfxCorrect();
     currentQuiz.correct++;
     word.correctStreak = (word.correctStreak || 0) + 1;
     if (word.correctStreak >= 2) word.level = 'mastered';
@@ -2195,6 +2349,7 @@ function answerChoice(btn, index, isCorrect) {
     currentQuiz.results.push({ word, correct: true });
   } else {
     btn.classList.add('wrong');
+    sfxWrong();
     currentQuiz.wrong++;
     word.level = 'weak';
     word.correctStreak = 0;
@@ -2229,6 +2384,7 @@ function nextQuestion() {
 
 function showResult() {
   showScreen('result');
+  sfxComplete();
   const q = currentQuiz;
   const totalAnswered = quizDrillMode ? q.totalCount : q.words.length;
   const pct = Math.round((q.correct / totalAnswered) * 100);
