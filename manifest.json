@@ -1,7 +1,7 @@
 {
-  "name": "みかん単語帳",
-  "short_name": "みかん単語帳",
-  "description": "CSVで読み込み・4択で覚える単語帳アプリ",
+  "name": "田中の一問一答",
+  "short_name": "田中の一問一答",
+  "description": "CSVで読み込み・一問一答で覚える単語帳アプリ",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#FFF5EB",

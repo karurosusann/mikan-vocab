@@ -1024,9 +1024,15 @@ body::after {
   font-weight: 600;
   color: var(--gray-800);
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .word-item .jpn-container {
   position: relative;
+  flex-shrink: 0;
+  max-width: 45%;
 }
 .word-item .jpn {
   font-size: 13px;
@@ -1063,6 +1069,15 @@ body::after {
   justify-content: center;
 }
 #screen-quiz-setup.active {
+  display: flex;
+}
+#screen-level-select {
+  display: none;
+  min-height: calc(100vh - 140px);
+  flex-direction: column;
+  justify-content: center;
+}
+#screen-level-select.active {
   display: flex;
 }
 .mode-selector {
@@ -1105,10 +1120,17 @@ body::after {
   flex: 1;
   font-weight: 600;
   color: var(--gray-800);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .setup-word-item .sw-jpn {
   color: var(--gray-400);
   font-size: 13px;
+  flex-shrink: 0;
+  max-width: 45%;
+  text-align: right;
 }
 .mode-toggle {
   display: flex;
@@ -1394,7 +1416,7 @@ body::after {
   <!-- Screen: Import -->
   <div id="screen-import" class="screen active">
     <div class="header">
-      <h1>📝 田中の一問一答</h1>
+      <h1>田中の一問一答！</h1>
       <p>CSVで読み込み・一問一答で覚える</p>
     </div>
     <div class="import-area" id="dropZone">
@@ -1419,7 +1441,7 @@ body::after {
   <!-- Screen: Dashboard -->
   <div id="screen-dashboard" class="screen">
     <div class="header">
-      <h1>📝 田中の一問一答</h1>
+      <h1>田中の一問一答！</h1>
       <button class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</button>
     </div>
     <!-- Deck selector -->
@@ -1467,11 +1489,6 @@ body::after {
           <p>範囲を選んで一問一答スタート</p>
         </div>
       </button>
-    </div>
-
-    <div class="progress-bar-container">
-      <h4>学習進捗</h4>
-      <div class="progress-bar" id="progressBar"></div>
     </div>
 
     <div class="action-section">
@@ -2038,7 +2055,7 @@ function showLevelSelect() {
   const options = [
     { key: 'all', icon: '📚', label: '全て', count: words.length, cls: 'all' },
     { key: 'unlearned', icon: '⬜', label: '未学習', count: counts.unlearned, cls: 'unlearned' },
-    { key: 'bookmarked', icon: '🔖', label: '保存済み', count: bookmarkedCount, cls: 'bookmarked' },
+    { key: 'bookmarked', icon: '📌', label: '保存済み', count: bookmarkedCount, cls: 'bookmarked' },
     { key: 'weak', icon: '🔴', label: '苦手', count: counts.weak, cls: 'weak' },
     { key: 'fuzzy', icon: '🟡', label: 'うろ覚え', count: counts.fuzzy, cls: 'fuzzy' },
     { key: 'mastered', icon: '🟢', label: '覚えた', count: counts.mastered, cls: 'mastered' },
@@ -2240,7 +2257,7 @@ function showQuizQuestion() {
           <button class="know-btn dont-know" onclick="answerKnowledge(false)">知らない 😣</button>
           <button class="know-btn know" onclick="answerKnowledge(true)">知ってる 😊</button>
         </div>
-        <button class="bookmark-btn ${word.bookmarked ? 'active' : ''}" id="bookmarkBtn" onclick="toggleBookmark()">🔖</button>
+        <button class="bookmark-btn ${word.bookmarked ? 'active' : ''}" id="bookmarkBtn" onclick="toggleBookmark()">📌</button>
       </div>
     `;
   } else {
@@ -2448,7 +2465,7 @@ function showResult() {
   if (uniqueMissed.length > 0) {
     missedHtml = `
       <div class="missed-section">
-        <h4>間違えた単語（${uniqueMissed.length}語）</h4>
+        <h4>まちがえた問題（${uniqueMissed.length}語）</h4>
         <div class="missed-list">
           ${uniqueMissed.map(r => `
             <div class="missed-item">
@@ -2481,7 +2498,7 @@ function showResult() {
     </div>
     ${levelChangeHtml}
     ${missedHtml}
-    ${uniqueMissed.length > 0 ? '<button class="result-btn review-btn" onclick="startMissedReview()">間違えた単語を復習する</button>' : ''}
+    ${uniqueMissed.length > 0 ? '<button class="result-btn review-btn" onclick="startMissedReview()">まちがえた問題を復習する</button>' : ''}
     <button class="result-btn" onclick="showScreen('dashboard'); renderDeckList(); updateDashboard();">ホームに戻る</button>
   `;
 }
@@ -2489,7 +2506,7 @@ function showResult() {
 function showMissedWords() {
   const missed = currentQuiz.results.filter(r => !r.correct);
   if (missed.length === 0) {
-    showToast('間違えた単語はありません！🎉');
+    showToast('まちがえた問題はありません！🎉');
     return;
   }
   showScreen('wordlist');
