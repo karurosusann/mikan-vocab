@@ -349,57 +349,59 @@ body::after {
 }
 
 /* ===== Deck Selector ===== */
-.deck-picker {
+.deck-carousel {
   margin-bottom: 20px;
 }
-.deck-picker-header {
+.deck-carousel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
 }
-.deck-picker-header h3 {
+.deck-carousel-header h3 {
   font-size: 14px;
   font-weight: 700;
   color: var(--gray-500);
 }
-.deck-picker-count {
+.deck-carousel-count {
   font-size: 12px;
   font-weight: 600;
   color: var(--gray-400);
 }
-.deck-picker-scroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  scroll-snap-type: x mandatory;
-}
-.deck-picker-scroll::-webkit-scrollbar { display: none; }
-.deck-picker-list {
+.deck-carousel-viewport {
   display: flex;
-  gap: 10px;
-  padding: 4px 0;
+  align-items: center;
+  gap: 8px;
+  touch-action: pan-y;
+}
+.deck-nav {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gray-200);
+  background: white;
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--gray-400);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.deck-nav:hover { border-color: var(--orange-400); color: var(--orange-500); }
+.deck-nav:disabled { opacity: 0.2; pointer-events: none; }
+.deck-carousel-card {
+  flex: 1;
+  min-width: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 .deck-card {
   background: white;
-  border: 2px solid var(--gray-200);
+  border: 2px solid var(--orange-500);
   border-radius: var(--radius);
-  padding: 14px 16px;
-  cursor: pointer;
-  transition: all 0.2s;
-  min-width: 260px;
-  max-width: 300px;
-  flex-shrink: 0;
-  scroll-snap-align: start;
-}
-.deck-card:hover {
-  border-color: var(--orange-300);
-  box-shadow: var(--shadow-sm);
-}
-.deck-card.active {
-  border-color: var(--orange-500);
-  background: var(--orange-50);
+  padding: 16px;
   box-shadow: 0 0 0 3px rgba(255,140,0,0.12);
 }
 .deck-card-top {
@@ -423,7 +425,7 @@ body::after {
   min-width: 0;
 }
 .deck-card .deck-name {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--gray-800);
   white-space: nowrap;
@@ -431,7 +433,7 @@ body::after {
   text-overflow: ellipsis;
 }
 .deck-card .deck-meta {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--gray-400);
   margin-top: 2px;
 }
@@ -463,6 +465,27 @@ body::after {
 .deck-card .deck-delete:hover {
   background: #FEE2E2;
   color: var(--red-500);
+}
+.deck-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+.deck-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gray-200);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.deck-dot.active {
+  background: var(--orange-500);
+  width: 20px;
+  border-radius: 4px;
 }
 .deck-mini-progress {
   display: flex;
@@ -1729,21 +1752,19 @@ body::after {
 
   <!-- Screen: Dashboard -->
   <div id="screen-dashboard" class="screen">
-    <div class="header">
-      <div class="header-btns">
-        <button class="help-toggle" onclick="showHelp()">❓</button>
-      </div>
-    </div>
-    <!-- Deck selector - horizontal swipe -->
-    <div class="deck-picker">
-      <div class="deck-picker-header">
+    <!-- Deck selector - carousel -->
+    <div class="deck-carousel">
+      <div class="deck-carousel-header">
         <h3>📚 デッキ</h3>
-        <span class="deck-picker-count" id="deckPickerCount">1/1</span>
+        <span class="deck-carousel-count" id="deckPickerCount">1/1</span>
       </div>
-      <div class="deck-picker-scroll" id="deckPickerScroll">
-        <div class="deck-picker-list" id="deckList"></div>
+      <div class="deck-carousel-viewport">
+        <button class="deck-nav deck-nav-prev" id="deckPrev" onclick="navigateDeck(-1)">‹</button>
+        <div class="deck-carousel-card" id="deckCardDisplay"></div>
+        <button class="deck-nav deck-nav-next" id="deckNext" onclick="navigateDeck(1)">›</button>
       </div>
-      <div style="margin-top:10px;">
+      <div class="deck-dots" id="deckDots"></div>
+      <div style="margin-top:12px;">
         <button class="secondary-btn" style="width:100%;" onclick="document.getElementById('fileInputAdd').click()">＋ 新しいCSVを追加</button>
         <input type="file" id="fileInputAdd" accept=".csv,.txt" style="display:none" onchange="handleFileAdd(this.files[0])">
       </div>
@@ -1987,11 +2008,6 @@ body::after {
         <p><strong>📌 保存：</strong> 気になる単語をピンして後でまとめて復習</p>
       </div>
 
-      <div class="help-section">
-        <h3>🔊 音声機能</h3>
-        <p>問題・答えの読み上げは自動で言語を判別します。右上の🔊ボタンでON/OFF切替</p>
-      </div>
-
       <button class="result-btn" style="width:100%;margin-top:16px;" onclick="closeHelp()">閉じる</button>
     </div>
   </div>
@@ -2016,7 +2032,6 @@ body::after {
     <h3 style="text-align:center;margin-bottom:16px;">📚 デモ問題を選択</h3>
     <div class="demo-list">
       <button class="demo-item" onclick="loadDemoData('korean')">🇰🇷 韓国語 中級<span>99語</span></button>
-      <button class="demo-item" onclick="loadDemoData('bank')">🏦 銀行知識<span>10語</span></button>
       <button class="demo-item" onclick="loadDemoData('education_law')">📜 教育基本法・学校教育法<span>10語</span></button>
       <button class="demo-item" onclick="loadDemoData('curriculum')">🏫 小学校学習指導要領<span>10語</span></button>
       <button class="demo-item" onclick="loadDemoData('student_guidance')">📖 生徒指導提要<span>10語</span></button>
@@ -2586,19 +2601,6 @@ const DEMO_DECKS = {
 감소하다,減少する
 지역,地域`
   },
-  bank: {
-    name: '銀行知識',
-    csv: `"銀行の三大業務とは「預金業務」「貸出業務」ともう一つは何か。","為替業務"
-"企業が手形や小切手の支払いに利用する利息がつかない預金を何というか。","当座預金"
-"金融機関が破綻した際に預金者1人当たり元本1000万円まで保護する制度は？","預金保険制度（ペイオフ）"
-"犯罪収益などの不正な資金の洗浄を防ぐための対策を何というか。","マネー・ローンダリング対策"
-"口座開設時に金融機関が顧客の身元や取引目的を確認する手続きは？","KYC（Know Your Customer）"
-"日本銀行が金利を操作して景気や物価を安定させる政策は？","金融政策"
-"元金に対して利息が付きさらにその利息にも利息が付く計算方法は？","複利"
-"銀行が企業や個人に資金を貸し出す際に徴収する利息の割合を何というか。","貸出金利"
-"資金の貸出において返済不能となるリスクを何というか。","信用リスク（デフォルトリスク）"
-"銀行が自己資本をリスクアセットで割った比率を何というか。","自己資本比率"`
-  },
   education_law: {
     name: '教育基本法・学校教育法',
     csv: `"教育基本法前文：民主的で文化的な（　）を建設して世界の平和と人類の福祉に貢献する","国家"
@@ -2668,61 +2670,115 @@ const DEMO_DECKS = {
 
 // ============ DECK LIST ============
 function renderDeckList() {
-  const container = document.getElementById('deckList');
-  container.innerHTML = decks.map(deck => {
-    const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
-    deck.words.forEach(w => {
-      if (counts[w.level] !== undefined) counts[w.level]++;
-    });
-    const total = deck.words.length || 1;
-    const isActive = deck.id === activeDeckId;
+  if (decks.length === 0) return;
+  const idx = decks.findIndex(d => d.id === activeDeckId);
+  if (idx < 0) { activeDeckId = decks[0].id; }
+  renderCurrentDeckCard();
+  renderDeckDots();
+  updateDeckNav();
+}
 
-    return `
-      <div class="deck-card ${isActive ? 'active' : ''}" onclick="selectDeck('${deck.id}')">
-        <div class="deck-card-top">
-          <div class="deck-icon">📖</div>
-          <div class="deck-info">
-            <div class="deck-name">${escapeHtml(deck.name)}</div>
-            <div class="deck-meta">${deck.words.length}語 ・ 覚えた ${counts.mastered}語</div>
-          </div>
-          <div class="deck-card-actions">
-            <button class="deck-edit" onclick="event.stopPropagation();renameDeck('${deck.id}')">✏️</button>
-            <button class="deck-delete" onclick="event.stopPropagation();deleteDeck('${deck.id}')">✕</button>
-          </div>
+function renderCurrentDeckCard() {
+  const deck = decks.find(d => d.id === activeDeckId);
+  if (!deck) return;
+  const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
+  deck.words.forEach(w => { if (counts[w.level] !== undefined) counts[w.level]++; });
+  const total = deck.words.length || 1;
+
+  const container = document.getElementById('deckCardDisplay');
+  container.innerHTML = `
+    <div class="deck-card">
+      <div class="deck-card-top">
+        <div class="deck-icon">📖</div>
+        <div class="deck-info">
+          <div class="deck-name">${escapeHtml(deck.name)}</div>
+          <div class="deck-meta">${deck.words.length}語 ・ 覚えた ${counts.mastered}語</div>
         </div>
-        <div class="deck-mini-progress" style="margin-top:10px;">
-          <div class="mini-bar" style="width:${(counts.mastered/total)*100}%;background:var(--green-500);"></div>
-          <div class="mini-bar" style="width:${(counts.fuzzy/total)*100}%;background:var(--yellow-400);"></div>
-          <div class="mini-bar" style="width:${(counts.weak/total)*100}%;background:var(--red-400);"></div>
-          <div class="mini-bar" style="width:${(counts.unlearned/total)*100}%;background:var(--gray-300);"></div>
+        <div class="deck-card-actions">
+          <button class="deck-edit" onclick="renameDeck('${deck.id}')">✏️</button>
+          <button class="deck-delete" onclick="deleteDeck('${deck.id}')">✕</button>
         </div>
       </div>
-    `;
-  }).join('');
+      <div class="deck-mini-progress" style="margin-top:10px;">
+        <div class="mini-bar" style="width:${(counts.mastered/total)*100}%;background:var(--green-500);"></div>
+        <div class="mini-bar" style="width:${(counts.fuzzy/total)*100}%;background:var(--yellow-400);"></div>
+        <div class="mini-bar" style="width:${(counts.weak/total)*100}%;background:var(--red-400);"></div>
+        <div class="mini-bar" style="width:${(counts.unlearned/total)*100}%;background:var(--gray-300);"></div>
+      </div>
+    </div>
+  `;
 
-  // Update counter
   const countEl = document.getElementById('deckPickerCount');
   if (countEl) {
-    const idx = decks.findIndex(d => d.id === activeDeckId) + 1;
-    countEl.textContent = `${idx || 1} / ${decks.length}`;
+    const i = decks.findIndex(d => d.id === activeDeckId) + 1;
+    countEl.textContent = `${i} / ${decks.length}`;
   }
-
-  // Scroll active deck into view
-  setTimeout(() => {
-    const activeCard = container.querySelector('.deck-card.active');
-    if (activeCard) {
-      activeCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-    }
-  }, 100);
 }
 
-function selectDeck(id) {
+function renderDeckDots() {
+  const dots = document.getElementById('deckDots');
+  if (!dots) return;
+  dots.innerHTML = decks.map((d, i) =>
+    `<button class="deck-dot ${d.id === activeDeckId ? 'active' : ''}" onclick="jumpToDeck(${i})"></button>`
+  ).join('');
+}
+
+function updateDeckNav() {
+  const idx = decks.findIndex(d => d.id === activeDeckId);
+  const prev = document.getElementById('deckPrev');
+  const next = document.getElementById('deckNext');
+  if (prev) prev.disabled = idx <= 0;
+  if (next) next.disabled = idx >= decks.length - 1;
+}
+
+function navigateDeck(dir) {
+  const idx = decks.findIndex(d => d.id === activeDeckId);
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= decks.length) return;
   sfxSelect();
-  activeDeckId = id;
+  activeDeckId = decks[newIdx].id;
   saveState();
-  renderDeckList();
+
+  const card = document.getElementById('deckCardDisplay');
+  card.style.transform = `translateX(${dir > 0 ? '-30' : '30'}px)`;
+  card.style.opacity = '0';
+  setTimeout(() => {
+    renderCurrentDeckCard();
+    renderDeckDots();
+    updateDeckNav();
+    updateDashboard();
+    card.style.transform = `translateX(${dir > 0 ? '30' : '-30'}px)`;
+    requestAnimationFrame(() => {
+      card.style.transform = 'translateX(0)';
+      card.style.opacity = '1';
+    });
+  }, 150);
+}
+
+function jumpToDeck(index) {
+  if (index < 0 || index >= decks.length) return;
+  const oldIdx = decks.findIndex(d => d.id === activeDeckId);
+  const dir = index > oldIdx ? 1 : -1;
+  sfxSelect();
+  activeDeckId = decks[index].id;
+  saveState();
+  renderCurrentDeckCard();
+  renderDeckDots();
+  updateDeckNav();
   updateDashboard();
 }
+
+// Swipe support for deck carousel
+(function() {
+  let startX = 0;
+  const el = document.getElementById('deckCardDisplay');
+  if (!el) return;
+  el.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+  el.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 50) navigateDeck(dx < 0 ? 1 : -1);
+  });
+})();
 
 function deleteDeck(id) {
   const deck = decks.find(d => d.id === id);
@@ -3599,14 +3655,20 @@ function renderWordList(level) {
 function toggleWordAnswer(el) {
   const jpn = el.querySelector('.jpn');
   if (!jpn) return;
-  if (jpn.classList.contains('hidden-answer')) {
-    // Revealing answer - speak the question first, then answer
-    jpn.classList.remove('hidden-answer');
-    speakText(el.dataset.jpn);
+  
+  if (answersHidden) {
+    // In hidden mode: tap toggles individual answer
+    if (jpn.classList.contains('hidden-answer')) {
+      jpn.classList.remove('hidden-answer');
+      speakText(el.dataset.jpn);
+    } else {
+      jpn.classList.add('hidden-answer');
+      speakText(el.dataset.eng);
+    }
   } else {
-    // Hiding answer - speak the question
-    jpn.classList.add('hidden-answer');
+    // In shown mode: tap just speaks
     speakText(el.dataset.eng);
+    setTimeout(() => speakText(el.dataset.jpn), 600);
   }
 }
 
