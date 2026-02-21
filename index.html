@@ -476,12 +476,15 @@ body::after {
 .quiz-card {
   background: white;
   border-radius: 24px;
-  padding: 40px 24px 32px;
+  padding: 32px 24px 28px;
   text-align: center;
   box-shadow: var(--shadow-lg);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   position: relative;
   overflow: hidden;
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
 }
 .quiz-card::before {
   content: '';
@@ -498,7 +501,8 @@ body::after {
   border-radius: 20px;
   font-size: 11px;
   font-weight: 700;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  align-self: center;
 }
 .quiz-card .english-word {
   font-family: 'DM Sans', sans-serif;
@@ -511,18 +515,28 @@ body::after {
 
 /* ===== Answer reveal area ===== */
 .answer-reveal {
-  margin-top: 12px;
+  margin-top: auto;
   position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 80px;
 }
 .answer-tap-area {
   background: linear-gradient(135deg, var(--orange-50), #FFF5EB);
   border: 2px dashed var(--orange-200);
   border-radius: 14px;
-  padding: 20px;
+  padding: 28px 20px;
   cursor: pointer;
   transition: all 0.3s ease;
   user-select: none;
   -webkit-user-select: none;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
 }
 .answer-tap-area:hover {
   border-color: var(--orange-400);
@@ -532,7 +546,7 @@ body::after {
   transform: scale(0.98);
 }
 .answer-tap-area .tap-hint {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--orange-400);
   font-weight: 600;
   display: flex;
@@ -710,6 +724,37 @@ body::after {
 .result-btn:hover {
   background: var(--orange-600);
   transform: translateY(-1px);
+}
+
+/* Deck tabs in word list */
+.deck-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.deck-tabs::-webkit-scrollbar { display: none; }
+.deck-tab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 2px solid var(--gray-200);
+  background: white;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.deck-tab:hover { border-color: var(--orange-300); }
+.deck-tab.active {
+  background: var(--orange-500);
+  border-color: var(--orange-500);
+  color: white;
 }
 
 /* Word list */
@@ -934,6 +979,84 @@ body::after {
 .badge-almost { background: #DBEAFE; color: var(--blue-500); }
 .badge-mastered { background: #DCFCE7; color: var(--green-600); }
 
+/* Confirm modal */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeInOverlay 0.2s ease;
+}
+.confirm-overlay.show { display: flex; }
+@keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+.confirm-modal {
+  background: white;
+  border-radius: 20px;
+  padding: 32px 24px 24px;
+  text-align: center;
+  max-width: 340px;
+  width: 100%;
+  box-shadow: var(--shadow-xl);
+  animation: modalPop 0.25s ease;
+}
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+.confirm-modal .confirm-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+.confirm-modal h3 {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--gray-800);
+  margin-bottom: 8px;
+}
+.confirm-modal p {
+  font-size: 13px;
+  color: var(--gray-500);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+.confirm-buttons {
+  display: flex;
+  gap: 10px;
+}
+.confirm-cancel {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid var(--gray-200);
+  background: white;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.confirm-cancel:hover { background: var(--gray-100); }
+.confirm-danger {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: var(--red-500);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+}
+.confirm-danger:hover { background: #DC2626; }
+
 /* Reset button */
 .reset-area {
   margin-top: 20px;
@@ -994,23 +1117,23 @@ body::after {
     </div>
 
     <div class="stats-grid">
-      <div class="stat-card unlearned">
+      <div class="stat-card unlearned" onclick="showQuizSetupWithLevel('unlearned')" style="cursor:pointer;">
         <div class="stat-num" id="count-unlearned">0</div>
         <div class="stat-label">未学習</div>
       </div>
-      <div class="stat-card weak">
+      <div class="stat-card weak" onclick="showQuizSetupWithLevel('weak')" style="cursor:pointer;">
         <div class="stat-num" id="count-weak">0</div>
         <div class="stat-label">苦手</div>
       </div>
-      <div class="stat-card fuzzy">
+      <div class="stat-card fuzzy" onclick="showQuizSetupWithLevel('fuzzy')" style="cursor:pointer;">
         <div class="stat-num" id="count-fuzzy">0</div>
         <div class="stat-label">うろ覚え</div>
       </div>
-      <div class="stat-card almost">
+      <div class="stat-card almost" onclick="showQuizSetupWithLevel('almost')" style="cursor:pointer;">
         <div class="stat-num" id="count-almost">0</div>
         <div class="stat-label">ほぼ覚えた</div>
       </div>
-      <div class="stat-card mastered">
+      <div class="stat-card mastered" onclick="showQuizSetupWithLevel('mastered')" style="cursor:pointer;">
         <div class="stat-num" id="count-mastered">0</div>
         <div class="stat-label">覚えた</div>
       </div>
@@ -1022,18 +1145,11 @@ body::after {
     </div>
 
     <div class="action-section">
-      <button class="action-btn study" onclick="showQuizSetup('study')">
+      <button class="action-btn study" onclick="showQuizSetup()">
         <div class="icon">📝</div>
         <div class="text">
-          <h3>学習する</h3>
-          <p>知ってる / 知らない で仕分け</p>
-        </div>
-      </button>
-      <button class="action-btn review" onclick="showQuizSetup('review')">
-        <div class="icon">🔄</div>
-        <div class="text">
-          <h3>復習する（4択）</h3>
-          <p>苦手・うろ覚えの単語を4択テスト</p>
+          <h3>学習する（4択）</h3>
+          <p>4択テストで単語を覚えよう</p>
         </div>
       </button>
       <button class="action-btn list" onclick="showWordList()">
@@ -1045,13 +1161,9 @@ body::after {
       </button>
     </div>
 
-    <div class="secondary-actions">
-      <button class="secondary-btn" onclick="exportProgress()">💾 進捗を保存</button>
-    </div>
-
     <div class="reset-area">
-      <button class="reset-btn" onclick="resetCurrentDeck()">🗑️ このデッキをリセット</button>
-      <button class="reset-btn" onclick="resetAll()">🗑️ すべてリセット</button>
+      <button class="reset-btn" onclick="confirmAction('このデッキの進捗をリセット', 'すべての単語が「未学習」に戻ります。この操作は取り消せません。', doResetCurrentDeck)">🗑️ このデッキをリセット</button>
+      <button class="reset-btn" onclick="confirmAction('すべてのデッキを削除', 'すべてのデッキと学習データが完全に削除されます。この操作は取り消せません。', doResetAll)">🗑️ すべてのデータを削除</button>
     </div>
   </div>
 
@@ -1071,7 +1183,23 @@ body::after {
           <option value="10">10問</option>
           <option value="20">20問</option>
           <option value="30">30問</option>
+          <option value="40">40問</option>
           <option value="50">50問</option>
+          <option value="60">60問</option>
+          <option value="70">70問</option>
+          <option value="80">80問</option>
+          <option value="90">90問</option>
+          <option value="100">100問</option>
+          <option value="110">110問</option>
+          <option value="120">120問</option>
+          <option value="130">130問</option>
+          <option value="140">140問</option>
+          <option value="150">150問</option>
+          <option value="160">160問</option>
+          <option value="170">170問</option>
+          <option value="180">180問</option>
+          <option value="190">190問</option>
+          <option value="200">200問</option>
           <option value="all">すべて</option>
         </select>
       </div>
@@ -1108,8 +1236,21 @@ body::after {
       <button class="quiz-back" onclick="showScreen('dashboard')">←</button>
       <h2>単語一覧</h2>
     </div>
+    <div class="deck-tabs" id="deckTabs"></div>
     <div class="filter-tabs" id="filterTabs"></div>
     <div class="word-items" id="wordItems"></div>
+  </div>
+</div>
+
+<div class="confirm-overlay" id="confirmOverlay" onclick="closeConfirm()">
+  <div class="confirm-modal" onclick="event.stopPropagation()">
+    <div class="confirm-icon">⚠️</div>
+    <h3 id="confirmTitle">本当にリセットしますか？</h3>
+    <p id="confirmDesc">この操作は取り消せません。</p>
+    <div class="confirm-buttons">
+      <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
+      <button class="confirm-danger" id="confirmDangerBtn">リセットする</button>
+    </div>
   </div>
 </div>
 
@@ -1121,7 +1262,7 @@ body::after {
 let decks = [];
 let activeDeckId = null;
 let currentQuiz = null;
-let quizMode = '';
+let quizMode = ''; // 'quiz' (4択) or 'flashcard' (一問一答)
 let selectedRange = 'all';
 
 const LEVELS = {
@@ -1323,19 +1464,20 @@ function selectDeck(id) {
 function deleteDeck(id) {
   const deck = decks.find(d => d.id === id);
   if (!deck) return;
-  if (!confirm(`「${deck.name}」を削除しますか？`)) return;
-  decks = decks.filter(d => d.id !== id);
-  if (activeDeckId === id) {
-    activeDeckId = decks.length > 0 ? decks[0].id : null;
-  }
-  saveState();
-  if (decks.length === 0) {
-    showScreen('import');
-  } else {
-    renderDeckList();
-    updateDashboard();
-  }
-  showToast('デッキを削除しました');
+  confirmAction('デッキを削除', '「' + deck.name + '」を削除しますか？この操作は取り消せません。', function() {
+    decks = decks.filter(d => d.id !== id);
+    if (activeDeckId === id) {
+      activeDeckId = decks.length > 0 ? decks[0].id : null;
+    }
+    saveState();
+    if (decks.length === 0) {
+      showScreen('import');
+    } else {
+      renderDeckList();
+      updateDashboard();
+    }
+    showToast('デッキを削除しました');
+  });
 }
 
 function escapeHtml(str) {
@@ -1374,46 +1516,74 @@ function updateDashboard() {
 }
 
 // ============ QUIZ SETUP ============
-function showQuizSetup(mode) {
-  quizMode = mode;
+function showQuizSetup(preselect) {
+  quizMode = 'quiz';
   showScreen('quiz-setup');
 
   const title = document.getElementById('setupTitle');
   const desc = document.getElementById('setupDesc');
   const optionsEl = document.getElementById('modeOptions');
 
-  if (mode === 'study') {
-    title.textContent = '学習モード';
-    desc.textContent = '知ってる / 知らない で仕分け';
-  } else {
-    title.textContent = '復習モード（4択）';
-    desc.textContent = '4択テストで記憶を確認';
-  }
+  title.textContent = '学習モード（4択）';
+  desc.textContent = '出題範囲を選ぼう';
 
   const words = getActiveWords();
   const counts = { unlearned: 0, weak: 0, fuzzy: 0, almost: 0, mastered: 0, all: words.length };
   words.forEach(w => counts[w.level]++);
 
-  let options = [];
-  if (mode === 'study') {
-    options = [
-      { key: 'unlearned', icon: '⬜', label: '未学習', count: counts.unlearned },
-      { key: 'weak', icon: '🔴', label: '苦手', count: counts.weak },
-      { key: 'all', icon: '📚', label: 'すべて', count: counts.all },
-    ];
-  } else {
-    options = [
-      { key: 'weak', icon: '🔴', label: '苦手', count: counts.weak },
-      { key: 'fuzzy', icon: '🟡', label: 'うろ覚え', count: counts.fuzzy },
-      { key: 'almost', icon: '🔵', label: 'ほぼ覚えた', count: counts.almost },
-      { key: 'all-review', icon: '📚', label: 'すべて（未学習以外）', count: counts.weak + counts.fuzzy + counts.almost + counts.mastered },
-    ];
-  }
+  const options = [
+    { key: 'unlearned', icon: '⬜', label: '未学習', count: counts.unlearned },
+    { key: 'weak', icon: '🔴', label: '苦手', count: counts.weak },
+    { key: 'fuzzy', icon: '🟡', label: 'うろ覚え', count: counts.fuzzy },
+    { key: 'almost', icon: '🔵', label: 'ほぼ覚えた', count: counts.almost },
+    { key: 'mastered', icon: '🟢', label: '覚えた', count: counts.mastered },
+    { key: 'all', icon: '📚', label: 'すべて', count: counts.all },
+  ];
 
-  selectedRange = options[0].key;
+  const preselectKey = preselect || options[0].key;
+  selectedRange = preselectKey;
 
-  optionsEl.innerHTML = options.map((opt, i) => `
-    <div class="mode-option ${i === 0 ? 'selected' : ''}" data-key="${opt.key}" onclick="selectRange('${opt.key}', this)">
+  optionsEl.innerHTML = options.map((opt) => `
+    <div class="mode-option ${opt.key === preselectKey ? 'selected' : ''}" data-key="${opt.key}" onclick="selectRange('${opt.key}', this)">
+      <div class="mode-icon">${opt.icon}</div>
+      <div class="mode-text">
+        <h4>${opt.label}</h4>
+        <p>${opt.count}語</p>
+      </div>
+    </div>
+  `).join('');
+
+  updateStartBtn();
+}
+
+function showQuizSetupWithLevel(level) {
+  quizMode = 'flashcard';
+  showScreen('quiz-setup');
+
+  const title = document.getElementById('setupTitle');
+  const desc = document.getElementById('setupDesc');
+  const optionsEl = document.getElementById('modeOptions');
+
+  title.textContent = '一問一答モード';
+  desc.textContent = '答えを見て 知ってる / 知らない で仕分け';
+
+  const words = getActiveWords();
+  const counts = { unlearned: 0, weak: 0, fuzzy: 0, almost: 0, mastered: 0, all: words.length };
+  words.forEach(w => counts[w.level]++);
+
+  const options = [
+    { key: 'unlearned', icon: '⬜', label: '未学習', count: counts.unlearned },
+    { key: 'weak', icon: '🔴', label: '苦手', count: counts.weak },
+    { key: 'fuzzy', icon: '🟡', label: 'うろ覚え', count: counts.fuzzy },
+    { key: 'almost', icon: '🔵', label: 'ほぼ覚えた', count: counts.almost },
+    { key: 'mastered', icon: '🟢', label: '覚えた', count: counts.mastered },
+    { key: 'all', icon: '📚', label: 'すべて', count: counts.all },
+  ];
+
+  selectedRange = level;
+
+  optionsEl.innerHTML = options.map((opt) => `
+    <div class="mode-option ${opt.key === level ? 'selected' : ''}" data-key="${opt.key}" onclick="selectRange('${opt.key}', this)">
       <div class="mode-icon">${opt.icon}</div>
       <div class="mode-text">
         <h4>${opt.label}</h4>
@@ -1441,13 +1611,8 @@ function updateStartBtn() {
 
 function getQuizPool() {
   const words = getActiveWords();
-  if (quizMode === 'study') {
-    if (selectedRange === 'all') return [...words];
-    return words.filter(w => w.level === selectedRange);
-  } else {
-    if (selectedRange === 'all-review') return words.filter(w => w.level !== 'unlearned');
-    return words.filter(w => w.level === selectedRange);
-  }
+  if (selectedRange === 'all') return [...words];
+  return words.filter(w => w.level === selectedRange);
 }
 
 // ============ QUIZ ============
@@ -1488,8 +1653,8 @@ function showQuizQuestion() {
   const answerReveal = document.getElementById('answerReveal');
   const body = document.getElementById('quizBody');
 
-  if (quizMode === 'study') {
-    // Answer is hidden, tap to reveal
+  if (quizMode === 'flashcard') {
+    // 一問一答: tap to reveal answer, then know/don't-know
     answerReveal.innerHTML = `
       <div class="answer-tap-area" onclick="revealAnswer(this)">
         <div class="tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
@@ -1503,8 +1668,13 @@ function showQuizQuestion() {
       </div>
     `;
   } else {
-    answerReveal.innerHTML = '';
-    // 4 choices
+    // 4択: tap to reveal answer (optional hint), then pick from 4 choices
+    answerReveal.innerHTML = `
+      <div class="answer-tap-area" onclick="revealAnswer(this)">
+        <div class="tap-hint"><span class="tap-icon">👆</span> タップして答えを見る</div>
+        <div class="answer-text">${escapeHtml(word.japanese)}</div>
+      </div>
+    `;
     const choices = generateChoices(word);
     body.innerHTML = `
       <div class="choices">
@@ -1659,22 +1829,46 @@ function showMissedWords() {
 }
 
 function confirmQuit() {
-  if (confirm('クイズを中断しますか？進捗は保存されます。')) {
+  confirmAction('クイズを中断', '中断しますか？ここまでの進捗は保存されます。', function() {
     showScreen('dashboard');
     renderDeckList();
     updateDashboard();
-  }
+  });
 }
 
 // ============ WORD LIST ============
+let wordListDeckId = null; // track which deck is shown in word list
+
 function showWordList() {
+  wordListDeckId = activeDeckId;
   showScreen('wordlist');
+  renderDeckTabs();
   renderFilterTabs();
   renderWordList('all');
 }
 
+function renderDeckTabs() {
+  const container = document.getElementById('deckTabs');
+  container.innerHTML = decks.map(deck => `
+    <button class="deck-tab ${deck.id === wordListDeckId ? 'active' : ''}" onclick="switchWordListDeck('${deck.id}', this)">${escapeHtml(deck.name)} (${deck.words.length})</button>
+  `).join('');
+}
+
+function switchWordListDeck(deckId, el) {
+  wordListDeckId = deckId;
+  el.parentElement.querySelectorAll('.deck-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderFilterTabs();
+  renderWordList('all');
+}
+
+function getWordListWords() {
+  const deck = decks.find(d => d.id === wordListDeckId);
+  return deck ? deck.words : [];
+}
+
 function renderFilterTabs() {
-  const words = getActiveWords();
+  const words = getWordListWords();
   const counts = { all: words.length, unlearned: 0, weak: 0, fuzzy: 0, almost: 0, mastered: 0 };
   words.forEach(w => counts[w.level]++);
 
@@ -1699,7 +1893,7 @@ function filterWords(level, el) {
 }
 
 function renderWordList(level) {
-  const words = getActiveWords();
+  const words = getWordListWords();
   const filtered = level === 'all' ? words : words.filter(w => w.level === level);
   const items = document.getElementById('wordItems');
 
@@ -1727,43 +1921,45 @@ function toggleWordAnswer(el) {
   }
 }
 
-// ============ EXPORT ============
-function exportProgress() {
-  const deck = getActiveDeck();
-  if (!deck) return;
-  const csv = deck.words.map(w => `${w.english},${w.japanese},${w.level},${w.correctStreak}`).join('\n');
-  const header = 'english,japanese,level,correctStreak\n';
-  const blob = new Blob([header + csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${deck.name}_progress.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('進捗をCSVに保存しました！');
+// ============ RESET ============
+// ============ CONFIRM MODAL ============
+let pendingConfirmAction = null;
+
+function confirmAction(title, desc, action) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmDesc').textContent = desc;
+  pendingConfirmAction = action;
+  const btn = document.getElementById('confirmDangerBtn');
+  btn.onclick = function() {
+    const actionToRun = pendingConfirmAction;
+    closeConfirm();
+    if (actionToRun) actionToRun();
+  };
+  document.getElementById('confirmOverlay').classList.add('show');
 }
 
-// ============ RESET ============
-function resetCurrentDeck() {
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+  pendingConfirmAction = null;
+}
+
+function doResetCurrentDeck() {
   const deck = getActiveDeck();
   if (!deck) return;
-  if (!confirm(`「${deck.name}」の進捗をリセットしますか？`)) return;
   deck.words.forEach(w => { w.level = 'unlearned'; w.correctStreak = 0; });
   saveState();
   renderDeckList();
   updateDashboard();
-  showToast('進捗をリセットしました');
+  showToast('「' + deck.name + '」の進捗をリセットしました');
 }
 
-function resetAll() {
-  if (confirm('すべてのデッキと進捗を削除しますか？')) {
-    decks = [];
-    activeDeckId = null;
-    localStorage.removeItem('mikan_decks');
-    localStorage.removeItem('mikan_activeDeck');
-    showScreen('import');
-    showToast('リセットしました');
-  }
+function doResetAll() {
+  decks = [];
+  activeDeckId = null;
+  localStorage.removeItem('mikan_decks');
+  localStorage.removeItem('mikan_activeDeck');
+  showScreen('import');
+  showToast('すべてのデッキを削除しました');
 }
 
 // ============ TOAST ============
