@@ -936,7 +936,7 @@ body::after {
   position: fixed;
   bottom: 30px;
   left: 50%;
-  transform: translateX(-50%) translateY(100px);
+  transform: translateX(-50%);
   background: var(--gray-800);
   color: white;
   padding: 14px 24px;
@@ -944,10 +944,16 @@ body::after {
   font-size: 14px;
   font-weight: 600;
   z-index: 1000;
-  transition: transform 0.3s ease;
   box-shadow: var(--shadow-xl);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.show {
+  opacity: 1;
+  visibility: visible;
+}
 
 /* Level badge colors */
 .badge-unlearned { background: var(--gray-200); color: var(--gray-500); }
@@ -1427,7 +1433,7 @@ function renderDeckList() {
             <div class="mini-bar" style="width:${(counts.unlearned/total)*100}%;background:var(--gray-300);"></div>
           </div>
         </div>
-        <button class="deck-delete" onclick="event.stopPropagation();deleteDeck('${deck.id}')" title="削除">✕</button>
+        <button class="deck-delete" onclick="event.stopPropagation();deleteDeck('${deck.id}')">✕</button>
       </div>
     `;
   }).join('');
