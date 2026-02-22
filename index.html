@@ -388,26 +388,25 @@ body::after {
   transition: all 0.15s;
   border-bottom: 1px solid var(--gray-100);
   background: white;
+  border: 2px solid transparent;
+  border-bottom: 1px solid var(--gray-100);
 }
 .deck-item:last-child { border-bottom: none; }
 .deck-item.active {
-  background: var(--orange-200);
-  box-shadow: inset 4px 0 0 var(--orange-600);
-  border-bottom-color: var(--orange-300);
+  background: var(--gray-50);
+  border: 2px solid var(--orange-400);
+  border-radius: var(--radius-sm);
 }
 .deck-item .di-icon {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: var(--gray-200);
+  background: linear-gradient(135deg, var(--orange-400), var(--orange-600));
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
   flex-shrink: 0;
-}
-.deck-item.active .di-icon {
-  background: linear-gradient(135deg, var(--orange-400), var(--orange-600));
 }
 .deck-item .di-body {
   flex: 1;
@@ -425,13 +424,10 @@ body::after {
 .deck-item .di-name {
   font-size: 14px;
   font-weight: 700;
-  color: var(--gray-500);
+  color: var(--gray-800);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.deck-item.active .di-name {
-  color: var(--gray-800);
 }
 .deck-item .di-meta {
   font-size: 11px;
@@ -1427,13 +1423,9 @@ body::after {
 /* Level select screen */
 .level-select-grid {
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 4px;
-  scrollbar-width: none;
+  flex-direction: column;
+  gap: 0;
 }
-.level-select-grid::-webkit-scrollbar { display: none; }
 .level-select-card {
   background: white;
   border-radius: var(--radius-sm);
@@ -1471,6 +1463,45 @@ body::after {
 .level-select-card.weak .ls-label, .level-select-card.weak .ls-count { color: var(--red-500); }
 .level-select-card.fuzzy .ls-label, .level-select-card.fuzzy .ls-count { color: var(--yellow-500); }
 .level-select-card.mastered .ls-label, .level-select-card.mastered .ls-count { color: var(--green-500); }
+.level-select-card.locked {
+  opacity: 0.5;
+  cursor: pointer;
+  position: relative;
+  background: var(--gray-50);
+  border: 2px dashed var(--gray-300);
+}
+.level-select-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.level-select-row::-webkit-scrollbar { display: none; }
+.level-praise-banner {
+  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 12px rgba(234, 179, 8, 0.2);
+}
+.level-praise-banner .praise-emoji {
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+.level-praise-banner .praise-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--orange-600);
+  margin-bottom: 4px;
+}
+.level-praise-banner .praise-sub {
+  font-size: 12px;
+  color: var(--gray-600);
+  line-height: 1.5;
+}
 .mode-options {
   display: flex;
   flex-direction: column;
@@ -3087,8 +3118,10 @@ function showLevelSelect() {
     if (counts[w.level] !== undefined) counts[w.level]++;
   });
 
+  const allMastered = words.length > 0 && counts.mastered === words.length;
+
   const options = [
-    { key: 'all', icon: '📚', label: '全て', count: words.length, cls: 'all' },
+    { key: 'all', icon: allMastered ? '👑' : '🔒', label: '全て', count: words.length, cls: 'all', locked: !allMastered },
     { key: 'bookmarked', icon: '📌', label: '保存済み', count: bookmarkedCount, cls: 'bookmarked' },
     { key: 'unlearned', icon: '⬜', label: '未学習', count: counts.unlearned, cls: 'unlearned' },
     { key: 'weak', icon: '🔴', label: '苦手', count: counts.weak, cls: 'weak' },
@@ -3096,15 +3129,56 @@ function showLevelSelect() {
     { key: 'mastered', icon: '🟢', label: '覚えた', count: counts.mastered, cls: 'mastered' },
   ];
 
-  document.getElementById('levelSelectGrid').innerHTML = options.map(opt => {
+  let html = '';
+
+  // Praise banner when all mastered
+  if (allMastered) {
+    html += `
+      <div class="level-praise-banner">
+        <div class="praise-emoji">🎉🏆🎉</div>
+        <div class="praise-title">全問マスター達成！</div>
+        <div class="praise-sub">すべての問題を覚えました！素晴らしい！<br>「全て」モードで総復習に挑戦しよう！</div>
+      </div>
+    `;
+  }
+
+  html += '<div class="level-select-row">';
+  html += options.map(opt => {
     const disabled = opt.count === 0;
+    const locked = opt.locked && !disabled;
+    if (locked) {
+      return `
+      <div class="level-select-card ${opt.cls} locked" onclick="showLockedMessage()">
+        <div class="ls-icon">${opt.icon}</div>
+        <div class="ls-label">${opt.label}</div>
+        <div class="ls-count">${opt.count}語</div>
+      </div>`;
+    }
     return `
     <div class="level-select-card ${opt.cls} ${disabled ? 'disabled' : ''}" ${disabled ? '' : `onclick="showQuizSetupWithLevel('${opt.key}')"`}>
       <div class="ls-icon">${opt.icon}</div>
       <div class="ls-label">${opt.label}</div>
       <div class="ls-count">${opt.count}語</div>
-    </div>
-  `}).join('');
+    </div>`;
+  }).join('');
+  html += '</div>';
+
+  document.getElementById('levelSelectGrid').innerHTML = html;
+
+  // Enable mouse wheel horizontal scroll on the row
+  const row = document.querySelector('.level-select-row');
+  if (row) {
+    row.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        e.preventDefault();
+        row.scrollLeft += e.deltaY;
+      }
+    }, { passive: false });
+  }
+}
+
+function showLockedMessage() {
+  showToast('🔒 全問を「覚えた」にすると解放されます！');
 }
 
 // ============ QUIZ SETUP ============
@@ -4026,6 +4100,7 @@ function initDragToReorder(item) {
   let longPressTimer = null;
   let isDragging = false;
 
+  // Touch events
   handle.addEventListener('touchstart', (e) => {
     e.preventDefault();
     const touch = e.touches[0];
@@ -4037,7 +4112,6 @@ function initDragToReorder(item) {
 
   handle.addEventListener('touchmove', (e) => {
     if (longPressTimer && !isDragging) {
-      // Check if moved too much before long press triggers
       clearTimeout(longPressTimer);
       longPressTimer = null;
     }
@@ -4049,9 +4123,7 @@ function initDragToReorder(item) {
 
   handle.addEventListener('touchend', () => {
     if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
-    if (isDragging && dragState) {
-      endDrag();
-    }
+    if (isDragging && dragState) { endDrag(); }
     isDragging = false;
   });
 
@@ -4059,6 +4131,37 @@ function initDragToReorder(item) {
     if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
     if (isDragging && dragState) { cancelDrag(); }
     isDragging = false;
+  });
+
+  // Mouse events
+  handle.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    longPressTimer = setTimeout(() => {
+      isDragging = true;
+      startDrag(item, e.clientY);
+    }, 250);
+
+    const onMouseMove = (ev) => {
+      if (longPressTimer && !isDragging) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+      if (isDragging && dragState) {
+        ev.preventDefault();
+        moveDrag(ev.clientY);
+      }
+    };
+
+    const onMouseUp = () => {
+      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+      if (isDragging && dragState) { endDrag(); }
+      isDragging = false;
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
   });
 }
 
