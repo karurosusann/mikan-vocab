@@ -349,144 +349,99 @@ body::after {
 }
 
 /* ===== Deck Selector ===== */
-.deck-carousel {
+.deck-list-section {
   margin-bottom: 20px;
 }
-.deck-carousel-header {
+.deck-list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
-.deck-carousel-header h3 {
+.deck-list-header h3 {
   font-size: 14px;
   font-weight: 700;
   color: var(--gray-500);
 }
-.deck-carousel-count {
+.deck-list-count {
   font-size: 12px;
   font-weight: 600;
   color: var(--gray-400);
 }
-.deck-carousel-viewport {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  touch-action: pan-y;
-}
-.deck-nav {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1.5px solid var(--gray-200);
-  background: white;
-  font-size: 22px;
-  font-weight: 300;
-  color: var(--gray-400);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.2s;
-}
-.deck-nav:hover { border-color: var(--orange-400); color: var(--orange-500); }
-.deck-nav:disabled { opacity: 0.2; pointer-events: none; }
-.deck-carousel-card {
-  flex: 1;
-  min-width: 0;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-.deck-card {
-  background: white;
-  border: 2px solid var(--orange-500);
+.deck-list-scroll {
+  max-height: 200px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: 0 0 0 3px rgba(255,140,0,0.12);
+  border: 1.5px solid var(--gray-200);
+  background: var(--gray-50);
 }
-.deck-card-top {
+.deck-list-scroll::-webkit-scrollbar { width: 3px; }
+.deck-list-scroll::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
+.deck-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-bottom: 1px solid var(--gray-100);
 }
-.deck-card .deck-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+.deck-item:last-child { border-bottom: none; }
+.deck-item:hover { background: var(--orange-50); }
+.deck-item.active {
+  background: white;
+  box-shadow: inset 3px 0 0 var(--orange-500);
+}
+.deck-item .di-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: linear-gradient(135deg, var(--orange-400), var(--orange-600));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 14px;
   flex-shrink: 0;
 }
-.deck-card .deck-info {
+.deck-item .di-info {
   flex: 1;
   min-width: 0;
 }
-.deck-card .deck-name {
-  font-size: 15px;
+.deck-item .di-name {
+  font-size: 14px;
   font-weight: 700;
   color: var(--gray-800);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.deck-card .deck-meta {
-  font-size: 12px;
+.deck-item .di-meta {
+  font-size: 11px;
   color: var(--gray-400);
-  margin-top: 2px;
+  margin-top: 1px;
 }
-.deck-card-actions {
+.deck-item .di-actions {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   flex-shrink: 0;
 }
-.deck-card .deck-edit,
-.deck-card .deck-delete {
-  width: 28px;
-  height: 28px;
+.deck-item .di-btn {
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   border: none;
   background: transparent;
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  flex-shrink: 0;
 }
-.deck-card .deck-edit:hover { background: var(--orange-100); }
-.deck-card .deck-delete {
-  color: var(--gray-300);
-  font-size: 16px;
-}
-.deck-card .deck-delete:hover {
-  background: #FEE2E2;
-  color: var(--red-500);
-}
-.deck-dots {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 10px;
-}
-.deck-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--gray-200);
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.deck-dot.active {
-  background: var(--orange-500);
-  width: 20px;
-  border-radius: 4px;
-}
+.deck-item .di-btn:hover { background: var(--gray-100); }
+.deck-item .di-btn.delete { color: var(--gray-300); font-size: 14px; }
+.deck-item .di-btn.delete:hover { background: #FEE2E2; color: var(--red-500); }
 .deck-mini-progress {
   display: flex;
   gap: 3px;
@@ -525,6 +480,12 @@ body::after {
   margin-top: 4px;
   letter-spacing: -0.2px;
 }
+.stat-card.disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+.stat-card.disabled:hover { transform: none; }
 .stat-card.all .stat-num { color: var(--gray-700); }
 .stat-card.all .stat-label { color: var(--gray-700); }
 .stat-card.unlearned .stat-num { color: var(--gray-400); }
@@ -798,6 +759,14 @@ body::after {
   border-color: var(--orange-500);
   opacity: 1;
 }
+.card-bookmark {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+}
 
 @keyframes revealFade {
   from { opacity: 0; transform: translateY(8px); }
@@ -866,10 +835,6 @@ body::after {
   gap: 10px;
   align-items: center;
   justify-content: center;
-}
-.know-buttons-wrap .bookmark-btn {
-  margin: 12px auto 0;
-  display: flex;
 }
 .know-btn {
   flex: 1;
@@ -1227,6 +1192,13 @@ body::after {
   min-width: 0;
   word-break: break-word;
   line-height: 1.4;
+  transition: all 0.2s;
+}
+.word-item .eng.hidden-question {
+  color: transparent;
+  background: var(--gray-200);
+  border-radius: 4px;
+  min-height: 20px;
 }
 .word-item .jpn-container {
   position: relative;
@@ -1399,6 +1371,12 @@ body::after {
 }
 .level-select-card:hover { transform: translateY(-2px); }
 .level-select-card:active { transform: scale(0.97); }
+.level-select-card.disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+.level-select-card.disabled:hover { transform: none; }
 .level-select-card .ls-icon { font-size: 28px; margin-bottom: 8px; }
 .level-select-card .ls-label {
   font-size: 15px;
@@ -1691,10 +1669,28 @@ body::after {
   font-weight: 700;
   cursor: pointer;
 }
+.ew-drag-handle {
+  color: var(--gray-300);
+  font-size: 18px;
+  cursor: grab;
+  padding: 0 2px;
   flex-shrink: 0;
-  transition: all 0.2s;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
-.editor-word-item .ew-delete:hover { background: #FEE2E2; }
+.editor-word-item.dragging {
+  opacity: 0.85;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  transform: scale(1.02);
+}
+.editor-word-item.drag-over-top {
+  border-top: 2.5px solid var(--orange-500);
+}
+.editor-word-item.drag-over-bottom {
+  border-bottom: 2.5px solid var(--orange-500);
+}
 .edit-word-modal .rename-input { margin-bottom: 10px; }
 
 /* Reset button */
@@ -1752,46 +1748,43 @@ body::after {
 
   <!-- Screen: Dashboard -->
   <div id="screen-dashboard" class="screen">
-    <!-- Deck selector - carousel -->
-    <div class="deck-carousel">
-      <div class="deck-carousel-header">
+    <!-- Deck selector - compact list -->
+    <div class="deck-list-section">
+      <div class="deck-list-header">
         <h3>📚 デッキ</h3>
-        <span class="deck-carousel-count" id="deckPickerCount">1/1</span>
+        <span class="deck-list-count" id="deckPickerCount">1/1</span>
       </div>
-      <div class="deck-carousel-viewport">
-        <button class="deck-nav deck-nav-prev" id="deckPrev" onclick="navigateDeck(-1)">‹</button>
-        <div class="deck-carousel-card" id="deckCardDisplay"></div>
-        <button class="deck-nav deck-nav-next" id="deckNext" onclick="navigateDeck(1)">›</button>
+      <div class="deck-list-scroll" id="deckListScroll">
+        <div id="deckList"></div>
       </div>
-      <div class="deck-dots" id="deckDots"></div>
-      <div style="margin-top:12px;">
+      <div style="margin-top:10px;">
         <button class="secondary-btn" style="width:100%;" onclick="document.getElementById('fileInputAdd').click()">＋ 新しいCSVを追加</button>
         <input type="file" id="fileInputAdd" accept=".csv,.txt" style="display:none" onchange="handleFileAdd(this.files[0])">
       </div>
     </div>
 
     <div class="stats-grid">
-      <div class="stat-card all" onclick="showQuizSetupWithLevel('all')" style="cursor:pointer;">
+      <div class="stat-card all" style="cursor:pointer;">
         <div class="stat-num" id="count-all">0</div>
         <div class="stat-label">全て</div>
       </div>
-      <div class="stat-card unlearned" onclick="showQuizSetupWithLevel('unlearned')" style="cursor:pointer;">
+      <div class="stat-card unlearned" style="cursor:pointer;">
         <div class="stat-num" id="count-unlearned">0</div>
         <div class="stat-label">未学習</div>
       </div>
-      <div class="stat-card bookmarked" onclick="showQuizSetupWithLevel('bookmarked')" style="cursor:pointer;">
+      <div class="stat-card bookmarked" style="cursor:pointer;">
         <div class="stat-num" id="count-bookmarked">0</div>
         <div class="stat-label">保存済み</div>
       </div>
-      <div class="stat-card weak" onclick="showQuizSetupWithLevel('weak')" style="cursor:pointer;">
+      <div class="stat-card weak" style="cursor:pointer;">
         <div class="stat-num" id="count-weak">0</div>
         <div class="stat-label">苦手</div>
       </div>
-      <div class="stat-card fuzzy" onclick="showQuizSetupWithLevel('fuzzy')" style="cursor:pointer;">
+      <div class="stat-card fuzzy" style="cursor:pointer;">
         <div class="stat-num" id="count-fuzzy">0</div>
         <div class="stat-label">うろ覚え</div>
       </div>
-      <div class="stat-card mastered" onclick="showQuizSetupWithLevel('mastered')" style="cursor:pointer;">
+      <div class="stat-card mastered" style="cursor:pointer;">
         <div class="stat-num" id="count-mastered">0</div>
         <div class="stat-label">覚えた</div>
       </div>
@@ -1910,6 +1903,7 @@ body::after {
       <div class="level-badge" id="quizBadge">未学習</div>
       <div class="english-word" id="quizWord"></div>
       <div class="answer-reveal" id="answerReveal"></div>
+      <button class="bookmark-btn card-bookmark" id="bookmarkBtn" onclick="event.stopPropagation();toggleBookmark()">📌</button>
     </div>
     <div id="quizBody"></div>
   </div>
@@ -1932,7 +1926,8 @@ body::after {
     </div>
     <div class="deck-tabs" id="deckTabs"></div>
     <div class="filter-tabs" id="filterTabs"></div>
-    <div style="text-align:right;margin-bottom:8px;">
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:8px;">
+      <button class="answer-toggle-btn" id="questionToggleBtn" onclick="toggleAllQuestions()">問題を隠す</button>
       <button class="answer-toggle-btn" id="answerToggleBtn" onclick="toggleAllAnswers()">答えを隠す</button>
     </div>
     <div class="word-items" id="wordItems"></div>
@@ -1946,6 +1941,11 @@ body::after {
         <button class="editor-add-btn" onclick="addWordDirect()">＋追加</button>
       </div>
       <h2 class="editor-title">問題を編集</h2>
+      <div class="search-bar" style="margin-top:10px;">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="editorSearchInput" placeholder="問題を検索..." oninput="onEditorSearch()" autocomplete="off">
+        <button class="search-clear" id="editorSearchClear" onclick="clearEditorSearch()">✕</button>
+      </div>
     </div>
     <div class="editor-word-list" id="editorWordList"></div>
   </div>
@@ -1959,6 +1959,10 @@ body::after {
       <h3 id="editWordTitle">単語を編集</h3>
       <input type="text" id="editWordEng" class="rename-input" placeholder="問題文を入力" autocomplete="off" autocorrect="off" data-form-type="other">
       <input type="text" id="editWordJpn" class="rename-input" placeholder="答えを入力" autocomplete="off" autocorrect="off" data-form-type="other">
+      <div id="insertPositionRow" style="display:none;margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:600;color:var(--gray-500);display:block;margin-bottom:6px;">挿入位置</label>
+        <select id="insertPosition" class="rename-input" style="margin-bottom:0;padding:10px 12px;font-size:14px;"></select>
+      </div>
       <div class="confirm-buttons">
         <button class="confirm-cancel" onclick="closeEditWord()">キャンセル</button>
         <button class="confirm-danger" style="background:var(--orange-500);box-shadow:0 4px 12px rgba(255,140,0,0.3);" onclick="saveWord()">保存</button>
@@ -2091,49 +2095,48 @@ let soundMuted = false; // Always on
 
 function initAudio() {
   try {
-    if (!audioCtx || audioCtx.state === 'closed') {
+    // If context exists but is in a bad state, destroy it
+    if (audioCtx && (audioCtx.state === 'closed' || audioCtx.state === 'suspended')) {
+      try { audioCtx.close(); } catch(e) {}
+      audioCtx = null;
+    }
+    if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
     if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
+      audioCtx.resume().catch(() => {});
     }
     audioEnabled = true;
   } catch(e) { audioEnabled = false; }
 }
 
-function toggleSound() {
-  soundMuted = !soundMuted;
-  localStorage.setItem('mikan_muted', soundMuted);
-  const btn = document.getElementById('soundToggle');
-  btn.textContent = soundMuted ? '🔇' : '🔊';
-  btn.classList.toggle('muted', soundMuted);
-  if (!soundMuted) { initAudio(); sfxTap(); }
-  if (soundMuted) stopAllAudio();
-}
+function toggleSound() {}
 
-// Initialize toggle button state
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('soundToggle');
-  if (btn) {
-    btn.textContent = soundMuted ? '🔇' : '🔊';
-    btn.classList.toggle('muted', soundMuted);
-  }
-});
+document.addEventListener('DOMContentLoaded', () => {});
 
 // Unlock and keep audio alive on every user interaction (iOS kills AudioContext in background)
 document.addEventListener('touchstart', initAudio, { passive: true });
 document.addEventListener('touchend', initAudio, { passive: true });
 document.addEventListener('click', initAudio);
 
-// Visibility change: re-init audio when coming back to foreground
+// Visibility change: force recreate audio context when coming back
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) {
-    initAudio();
-    if (audioCtx && audioCtx.state === 'suspended') {
-      audioCtx.resume();
+    // Force destroy and recreate on next interaction
+    if (audioCtx) {
+      try { audioCtx.close(); } catch(e) {}
+      audioCtx = null;
+      audioEnabled = false;
     }
   }
 });
+
+// Periodic check: if context got suspended somehow, fix it
+setInterval(() => {
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
+  }
+}, 3000);
 
 function playTone(freq, duration, type, vol) {
   if (soundMuted) return;
@@ -2671,114 +2674,46 @@ const DEMO_DECKS = {
 // ============ DECK LIST ============
 function renderDeckList() {
   if (decks.length === 0) return;
-  const idx = decks.findIndex(d => d.id === activeDeckId);
-  if (idx < 0) { activeDeckId = decks[0].id; }
-  renderCurrentDeckCard();
-  renderDeckDots();
-  updateDeckNav();
-}
-
-function renderCurrentDeckCard() {
-  const deck = decks.find(d => d.id === activeDeckId);
-  if (!deck) return;
-  const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
-  deck.words.forEach(w => { if (counts[w.level] !== undefined) counts[w.level]++; });
-  const total = deck.words.length || 1;
-
-  const container = document.getElementById('deckCardDisplay');
-  container.innerHTML = `
-    <div class="deck-card">
-      <div class="deck-card-top">
-        <div class="deck-icon">📖</div>
-        <div class="deck-info">
-          <div class="deck-name">${escapeHtml(deck.name)}</div>
-          <div class="deck-meta">${deck.words.length}語 ・ 覚えた ${counts.mastered}語</div>
+  const container = document.getElementById('deckList');
+  container.innerHTML = decks.map(deck => {
+    const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
+    deck.words.forEach(w => { if (counts[w.level] !== undefined) counts[w.level]++; });
+    const isActive = deck.id === activeDeckId;
+    return `
+      <div class="deck-item ${isActive ? 'active' : ''}" onclick="selectDeck('${deck.id}')">
+        <div class="di-icon">📖</div>
+        <div class="di-info">
+          <div class="di-name">${escapeHtml(deck.name)}</div>
+          <div class="di-meta">${deck.words.length}語 ・ 覚えた ${counts.mastered}語</div>
         </div>
-        <div class="deck-card-actions">
-          <button class="deck-edit" onclick="renameDeck('${deck.id}')">✏️</button>
-          <button class="deck-delete" onclick="deleteDeck('${deck.id}')">✕</button>
+        <div class="di-actions">
+          <button class="di-btn" onclick="event.stopPropagation();renameDeck('${deck.id}')">✏️</button>
+          <button class="di-btn delete" onclick="event.stopPropagation();deleteDeck('${deck.id}')">✕</button>
         </div>
       </div>
-      <div class="deck-mini-progress" style="margin-top:10px;">
-        <div class="mini-bar" style="width:${(counts.mastered/total)*100}%;background:var(--green-500);"></div>
-        <div class="mini-bar" style="width:${(counts.fuzzy/total)*100}%;background:var(--yellow-400);"></div>
-        <div class="mini-bar" style="width:${(counts.weak/total)*100}%;background:var(--red-400);"></div>
-        <div class="mini-bar" style="width:${(counts.unlearned/total)*100}%;background:var(--gray-300);"></div>
-      </div>
-    </div>
-  `;
+    `;
+  }).join('');
 
   const countEl = document.getElementById('deckPickerCount');
   if (countEl) {
-    const i = decks.findIndex(d => d.id === activeDeckId) + 1;
-    countEl.textContent = `${i} / ${decks.length}`;
+    const idx = decks.findIndex(d => d.id === activeDeckId) + 1;
+    countEl.textContent = `${idx} / ${decks.length}`;
   }
-}
 
-function renderDeckDots() {
-  const dots = document.getElementById('deckDots');
-  if (!dots) return;
-  dots.innerHTML = decks.map((d, i) =>
-    `<button class="deck-dot ${d.id === activeDeckId ? 'active' : ''}" onclick="jumpToDeck(${i})"></button>`
-  ).join('');
-}
-
-function updateDeckNav() {
-  const idx = decks.findIndex(d => d.id === activeDeckId);
-  const prev = document.getElementById('deckPrev');
-  const next = document.getElementById('deckNext');
-  if (prev) prev.disabled = idx <= 0;
-  if (next) next.disabled = idx >= decks.length - 1;
-}
-
-function navigateDeck(dir) {
-  const idx = decks.findIndex(d => d.id === activeDeckId);
-  const newIdx = idx + dir;
-  if (newIdx < 0 || newIdx >= decks.length) return;
-  sfxSelect();
-  activeDeckId = decks[newIdx].id;
-  saveState();
-
-  const card = document.getElementById('deckCardDisplay');
-  card.style.transform = `translateX(${dir > 0 ? '-30' : '30'}px)`;
-  card.style.opacity = '0';
+  // Scroll active item into view
   setTimeout(() => {
-    renderCurrentDeckCard();
-    renderDeckDots();
-    updateDeckNav();
-    updateDashboard();
-    card.style.transform = `translateX(${dir > 0 ? '30' : '-30'}px)`;
-    requestAnimationFrame(() => {
-      card.style.transform = 'translateX(0)';
-      card.style.opacity = '1';
-    });
-  }, 150);
+    const active = container.querySelector('.deck-item.active');
+    if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 50);
 }
 
-function jumpToDeck(index) {
-  if (index < 0 || index >= decks.length) return;
-  const oldIdx = decks.findIndex(d => d.id === activeDeckId);
-  const dir = index > oldIdx ? 1 : -1;
+function selectDeck(id) {
   sfxSelect();
-  activeDeckId = decks[index].id;
+  activeDeckId = id;
   saveState();
-  renderCurrentDeckCard();
-  renderDeckDots();
-  updateDeckNav();
+  renderDeckList();
   updateDashboard();
 }
-
-// Swipe support for deck carousel
-(function() {
-  let startX = 0;
-  const el = document.getElementById('deckCardDisplay');
-  if (!el) return;
-  el.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
-  el.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - startX;
-    if (Math.abs(dx) > 50) navigateDeck(dx < 0 ? 1 : -1);
-  });
-})();
 
 function deleteDeck(id) {
   const deck = decks.find(d => d.id === id);
@@ -2849,10 +2784,28 @@ function updateDashboard() {
   });
 
   ['unlearned', 'weak', 'fuzzy', 'mastered'].forEach(level => {
-    document.getElementById(`count-${level}`).textContent = counts[level];
+    const el = document.getElementById(`count-${level}`);
+    el.textContent = counts[level];
+    const card = el.closest('.stat-card');
+    if (card) {
+      card.classList.toggle('disabled', counts[level] === 0);
+      card.onclick = counts[level] > 0 ? () => showQuizSetupWithLevel(level) : null;
+    }
   });
-  document.getElementById('count-bookmarked').textContent = counts.bookmarked;
-  document.getElementById('count-all').textContent = words.length;
+  const bkEl = document.getElementById('count-bookmarked');
+  bkEl.textContent = counts.bookmarked;
+  const bkCard = bkEl.closest('.stat-card');
+  if (bkCard) {
+    bkCard.classList.toggle('disabled', counts.bookmarked === 0);
+    bkCard.onclick = counts.bookmarked > 0 ? () => showQuizSetupWithLevel('bookmarked') : null;
+  }
+  const allEl = document.getElementById('count-all');
+  allEl.textContent = words.length;
+  const allCard = allEl.closest('.stat-card');
+  if (allCard) {
+    allCard.classList.toggle('disabled', words.length === 0);
+    allCard.onclick = words.length > 0 ? () => showQuizSetupWithLevel('all') : null;
+  }
 
   const total = words.length || 1;
   const bar = document.getElementById('progressBar');
@@ -2962,13 +2915,15 @@ function showLevelSelect() {
     { key: 'mastered', icon: '🟢', label: '覚えた', count: counts.mastered, cls: 'mastered' },
   ];
 
-  document.getElementById('levelSelectGrid').innerHTML = options.map(opt => `
-    <div class="level-select-card ${opt.cls}" onclick="showQuizSetupWithLevel('${opt.key}')">
+  document.getElementById('levelSelectGrid').innerHTML = options.map(opt => {
+    const disabled = opt.count === 0;
+    return `
+    <div class="level-select-card ${opt.cls} ${disabled ? 'disabled' : ''}" ${disabled ? '' : `onclick="showQuizSetupWithLevel('${opt.key}')"`}>
       <div class="ls-icon">${opt.icon}</div>
       <div class="ls-label">${opt.label}</div>
       <div class="ls-count">${opt.count}語</div>
     </div>
-  `).join('');
+  `}).join('');
 }
 
 // ============ QUIZ SETUP ============
@@ -3052,7 +3007,7 @@ function showQuizSetupWithLevel(level) {
 
   // Title
   const levelNames = {
-    unlearned: '未学習', weak: '苦手', fuzzy: 'うろ覚え', mastered: '覚えた', bookmarked: '保存済み'
+    all: '全て', unlearned: '未学習', weak: '苦手', fuzzy: 'うろ覚え', mastered: '覚えた', bookmarked: '保存済み'
   };
   document.getElementById('setupTitle').textContent = levelNames[level] || level;
 
@@ -3177,6 +3132,10 @@ function showQuizQuestion() {
   // Reset card state
   const card = document.getElementById('quizCard');
   card.classList.remove('revealed');
+  
+  // Update bookmark button in card
+  const bkmBtn = document.getElementById('bookmarkBtn');
+  if (bkmBtn) bkmBtn.classList.toggle('active', !!word.bookmarked);
 
   const answerReveal = document.getElementById('answerReveal');
   const body = document.getElementById('quizBody');
@@ -3194,7 +3153,6 @@ function showQuizQuestion() {
           <button class="know-btn dont-know" onclick="answerKnowledge(false)">知らない</button>
           <button class="know-btn know" onclick="answerKnowledge(true)">知ってる</button>
         </div>
-        <button class="bookmark-btn ${word.bookmarked ? 'active' : ''}" id="bookmarkBtn" onclick="toggleBookmark()">📌</button>
       </div>
     `;
   } else {
@@ -3349,6 +3307,8 @@ function nextQuestion() {
 }
 
 function showResult() {
+  // Stop any ongoing speech/audio
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   showScreen('result');
   sfxComplete();
   const q = currentQuiz;
@@ -3533,8 +3493,11 @@ function showWordList() {
   wordListDeckId = activeDeckId;
   showScreen('wordlist');
   answersHidden = false;
-  const btn = document.getElementById('answerToggleBtn');
-  if (btn) { btn.textContent = '答えを隠す'; btn.classList.remove('hiding'); }
+  questionsHidden = false;
+  const abtn = document.getElementById('answerToggleBtn');
+  if (abtn) { abtn.textContent = '答えを隠す'; abtn.classList.remove('hiding'); }
+  const qbtn = document.getElementById('questionToggleBtn');
+  if (qbtn) { qbtn.textContent = '問題を隠す'; qbtn.classList.remove('hiding'); }
   const searchInput = document.getElementById('wordSearchInput');
   if (searchInput) { searchInput.value = ''; }
   document.getElementById('searchClear')?.classList.remove('show');
@@ -3609,6 +3572,7 @@ function filterWords(level, el) {
 }
 
 let answersHidden = false;
+let questionsHidden = false;
 
 function toggleAllAnswers() {
   answersHidden = !answersHidden;
@@ -3617,6 +3581,16 @@ function toggleAllAnswers() {
   btn.classList.toggle('hiding', answersHidden);
   document.querySelectorAll('#wordItems .jpn').forEach(el => {
     el.classList.toggle('hidden-answer', answersHidden);
+  });
+}
+
+function toggleAllQuestions() {
+  questionsHidden = !questionsHidden;
+  const btn = document.getElementById('questionToggleBtn');
+  btn.textContent = questionsHidden ? '問題を表示' : '問題を隠す';
+  btn.classList.toggle('hiding', questionsHidden);
+  document.querySelectorAll('#wordItems .eng').forEach(el => {
+    el.classList.toggle('hidden-question', questionsHidden);
   });
 }
 
@@ -3646,37 +3620,105 @@ function renderWordList(level) {
   items.innerHTML = filtered.map(w => `
     <div class="word-item" data-eng="${escapeHtml(w.english)}" data-jpn="${escapeHtml(w.japanese)}" onclick="toggleWordAnswer(this)">
       <div class="level-dot ${w.level}"></div>
-      <div class="eng">${escapeHtml(w.english)}</div>
+      <div class="eng ${questionsHidden ? 'hidden-question' : ''}">${escapeHtml(w.english)}</div>
       <div class="jpn-container"><div class="jpn ${answersHidden ? 'hidden-answer' : ''}" data-answer="${escapeHtml(w.japanese)}">${escapeHtml(w.japanese)}</div></div>
     </div>
   `).join('');
 }
 
 function toggleWordAnswer(el) {
+  const eng = el.querySelector('.eng');
   const jpn = el.querySelector('.jpn');
   if (!jpn) return;
   
-  if (answersHidden) {
-    // In hidden mode: tap toggles individual answer
-    if (jpn.classList.contains('hidden-answer')) {
+  if (answersHidden || questionsHidden) {
+    // In hidden mode: tap reveals/hides and speaks the revealed part
+    if (answersHidden && jpn.classList.contains('hidden-answer')) {
       jpn.classList.remove('hidden-answer');
       speakText(el.dataset.jpn);
-    } else {
+      return;
+    }
+    if (answersHidden && !jpn.classList.contains('hidden-answer')) {
       jpn.classList.add('hidden-answer');
+      return;
+    }
+    if (questionsHidden && eng && eng.classList.contains('hidden-question')) {
+      eng.classList.remove('hidden-question');
       speakText(el.dataset.eng);
+      return;
+    }
+    if (questionsHidden && eng && !eng.classList.contains('hidden-question')) {
+      eng.classList.add('hidden-question');
+      return;
     }
   } else {
-    // In shown mode: tap just speaks
-    speakText(el.dataset.eng);
-    setTimeout(() => speakText(el.dataset.jpn), 600);
+    // Both shown: speak question, then answer sequentially
+    speakTextSequence(el.dataset.eng, el.dataset.jpn);
   }
+}
+
+// Speak two texts in sequence (wait for first to finish)
+function speakTextSequence(text1, text2) {
+  if (soundMuted || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  
+  const speak = (text, onEnd) => {
+    let cleanText = text.replace(/[\u{1F000}-\u{1FFFF}]/gu, '').trim();
+    if (!cleanText || /^[\d\s.,:;!?()\/\-]+$/.test(cleanText)) {
+      if (onEnd) onEnd();
+      return;
+    }
+    const lang = detectLang(cleanText);
+    const langMap = { en: 'en-US', ja: 'ja-JP', ko: 'ko-KR', zh: 'zh-CN', fr: 'fr-FR', de: 'de-DE', es: 'es-ES' };
+    const u = new SpeechSynthesisUtterance(cleanText);
+    u.lang = langMap[lang] || 'en-US';
+    u.rate = lang === 'en' ? 0.85 : 1.1;
+    u.volume = 0.45;
+    if (ttsVoiceCache[lang]) u.voice = ttsVoiceCache[lang];
+    
+    // iOS keepAlive workaround
+    let iosKeepAlive = setInterval(() => {
+      if (!window.speechSynthesis.speaking) {
+        clearInterval(iosKeepAlive);
+      } else {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      }
+    }, 5000);
+    
+    u.onend = () => { clearInterval(iosKeepAlive); if (onEnd) setTimeout(onEnd, 300); };
+    u.onerror = () => { clearInterval(iosKeepAlive); if (onEnd) onEnd(); };
+    window.speechSynthesis.speak(u);
+  };
+
+  speak(text1, () => speak(text2, null));
 }
 
 // ============ WORD EDITOR ============
 let editingWordIndex = null;
+let editorSearchQuery = '';
 
 function showWordEditor() {
   showScreen('word-editor');
+  editorSearchQuery = '';
+  const si = document.getElementById('editorSearchInput');
+  if (si) si.value = '';
+  document.getElementById('editorSearchClear')?.classList.remove('show');
+  renderEditorList();
+}
+
+function onEditorSearch() {
+  const input = document.getElementById('editorSearchInput');
+  const clearBtn = document.getElementById('editorSearchClear');
+  editorSearchQuery = (input?.value || '').trim().toLowerCase();
+  clearBtn?.classList.toggle('show', editorSearchQuery.length > 0);
+  renderEditorList();
+}
+
+function clearEditorSearch() {
+  document.getElementById('editorSearchInput').value = '';
+  editorSearchQuery = '';
+  document.getElementById('editorSearchClear')?.classList.remove('show');
   renderEditorList();
 }
 
@@ -3687,11 +3729,27 @@ function renderEditorList() {
     el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-400);">単語がありません</div>';
     return;
   }
-  el.innerHTML = words.map((w, i) => `
+
+  // Build index-mapped filtered list
+  let items = words.map((w, i) => ({ w, i }));
+  if (editorSearchQuery) {
+    items = items.filter(({ w }) =>
+      w.english.toLowerCase().includes(editorSearchQuery) ||
+      w.japanese.toLowerCase().includes(editorSearchQuery)
+    );
+  }
+
+  if (items.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray-400);font-size:13px;">検索結果がありません</div>';
+    return;
+  }
+
+  el.innerHTML = items.map(({ w, i }) => `
     <div class="editor-word-item" data-index="${i}">
       <div class="ew-delete-bg" onclick="deleteWord(${i})">削除</div>
-      <div class="ew-inner" onclick="showEditWordModal(${i})">
-        <div class="ew-content">
+      <div class="ew-inner">
+        <div class="ew-drag-handle" data-index="${i}">⠿</div>
+        <div class="ew-content" onclick="showEditWordModal(${i})">
           <div class="ew-eng">${escapeHtml(w.english)}</div>
           <div class="ew-jpn">${escapeHtml(w.japanese)}</div>
         </div>
@@ -3699,15 +3757,21 @@ function renderEditorList() {
     </div>
   `).join('');
 
-  // Attach swipe handlers
-  el.querySelectorAll('.editor-word-item').forEach(initSwipeToDelete);
+  // Attach swipe + drag handlers
+  el.querySelectorAll('.editor-word-item').forEach(item => {
+    initSwipeToDelete(item);
+    initDragToReorder(item);
+  });
 }
 
+// --- Swipe to delete ---
 function initSwipeToDelete(item) {
   const inner = item.querySelector('.ew-inner');
   let startX = 0, currentX = 0, swiping = false;
 
   inner.addEventListener('touchstart', (e) => {
+    // Don't swipe if touch started on drag handle
+    if (e.target.closest('.ew-drag-handle')) return;
     startX = e.touches[0].clientX;
     currentX = 0;
     swiping = true;
@@ -3722,6 +3786,7 @@ function initSwipeToDelete(item) {
   }, { passive: true });
 
   inner.addEventListener('touchend', () => {
+    if (!swiping) return;
     swiping = false;
     inner.style.transition = 'transform 0.25s ease';
     if (currentX < -40) {
@@ -3731,25 +3796,158 @@ function initSwipeToDelete(item) {
     }
   });
 
-  // Click on inner to edit (but not when swiped open)
   inner.addEventListener('click', (e) => {
     if (inner.style.transform === 'translateX(-80px)') {
       e.stopPropagation();
+      e.preventDefault();
       inner.style.transform = 'translateX(0)';
     }
   });
 }
 
+// --- Drag to reorder (long press on handle) ---
+let dragState = null;
+
+function initDragToReorder(item) {
+  const handle = item.querySelector('.ew-drag-handle');
+  if (!handle) return;
+  let longPressTimer = null;
+
+  handle.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    longPressTimer = setTimeout(() => {
+      startDrag(item, touch.clientY);
+    }, 300);
+  });
+
+  handle.addEventListener('touchmove', (e) => {
+    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+    if (dragState && dragState.el === item) {
+      e.preventDefault();
+      moveDrag(e.touches[0].clientY);
+    }
+  });
+
+  handle.addEventListener('touchend', (e) => {
+    if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+    if (dragState && dragState.el === item) {
+      endDrag();
+    }
+  });
+}
+
+function startDrag(item, startY) {
+  if (editorSearchQuery) {
+    showToast('検索中は並べ替えできません');
+    return;
+  }
+  const list = document.getElementById('editorWordList');
+  const items = Array.from(list.querySelectorAll('.editor-word-item'));
+  const rect = item.getBoundingClientRect();
+
+  item.classList.add('dragging');
+  dragState = {
+    el: item,
+    fromIndex: parseInt(item.dataset.index),
+    startY: startY,
+    offsetY: startY - rect.top,
+    items: items
+  };
+
+  // Haptic feedback if available
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function moveDrag(clientY) {
+  if (!dragState) return;
+  const list = document.getElementById('editorWordList');
+  const items = Array.from(list.querySelectorAll('.editor-word-item'));
+
+  // Clear all indicators
+  items.forEach(it => {
+    it.classList.remove('drag-over-top', 'drag-over-bottom');
+  });
+
+  // Find which item we're over
+  for (const it of items) {
+    if (it === dragState.el) continue;
+    const rect = it.getBoundingClientRect();
+    const mid = rect.top + rect.height / 2;
+    if (clientY >= rect.top && clientY <= rect.bottom) {
+      if (clientY < mid) {
+        it.classList.add('drag-over-top');
+      } else {
+        it.classList.add('drag-over-bottom');
+      }
+      break;
+    }
+  }
+}
+
+function endDrag() {
+  if (!dragState) return;
+  const list = document.getElementById('editorWordList');
+  const items = Array.from(list.querySelectorAll('.editor-word-item'));
+  const fromIdx = dragState.fromIndex;
+
+  // Find drop target
+  let toIdx = fromIdx;
+  for (const it of items) {
+    if (it === dragState.el) continue;
+    const idx = parseInt(it.dataset.index);
+    if (it.classList.contains('drag-over-top')) {
+      toIdx = idx < fromIdx ? idx : idx;
+      break;
+    }
+    if (it.classList.contains('drag-over-bottom')) {
+      toIdx = idx < fromIdx ? idx + 1 : idx;
+      break;
+    }
+  }
+
+  // Clean up visual state
+  items.forEach(it => {
+    it.classList.remove('drag-over-top', 'drag-over-bottom', 'dragging');
+  });
+
+  // Perform the move
+  if (toIdx !== fromIdx) {
+    const words = getActiveWords();
+    const [moved] = words.splice(fromIdx, 1);
+    const insertAt = toIdx > fromIdx ? toIdx - 1 : toIdx;
+    words.splice(insertAt, 0, moved);
+    saveState();
+    showToast('並べ替えました');
+  }
+
+  dragState = null;
+  renderEditorList();
+}
+
+// --- Add word with position ---
 function addWordDirect() {
   editingWordIndex = null;
   document.getElementById('editWordTitle').textContent = '単語を追加';
   document.getElementById('editWordEng').value = '';
   document.getElementById('editWordJpn').value = '';
+
+  // Show position selector
+  const posRow = document.getElementById('insertPositionRow');
+  const posSel = document.getElementById('insertPosition');
+  posRow.style.display = 'block';
+  const words = getActiveWords();
+  let options = '<option value="0">先頭</option>';
+  words.forEach((w, i) => {
+    const label = w.english.length > 20 ? w.english.slice(0, 20) + '…' : w.english;
+    options += `<option value="${i + 1}">${i + 1}. ${escapeHtml(label)} の後</option>`;
+  });
+  posSel.innerHTML = options;
+  posSel.value = String(words.length); // default: 末尾
+
   const overlay = document.getElementById('editWordOverlay');
   overlay.classList.add('show');
-  setTimeout(() => {
-    document.getElementById('editWordEng').focus();
-  }, 300);
+  setTimeout(() => document.getElementById('editWordEng').focus(), 300);
 }
 
 function showAddWordModal() {
@@ -3764,6 +3962,8 @@ function showEditWordModal(index) {
   document.getElementById('editWordTitle').textContent = '単語を編集';
   document.getElementById('editWordEng').value = word.english;
   document.getElementById('editWordJpn').value = word.japanese;
+  // Hide position selector for editing
+  document.getElementById('insertPositionRow').style.display = 'none';
   const overlay = document.getElementById('editWordOverlay');
   overlay.classList.add('show');
   setTimeout(() => document.getElementById('editWordEng').focus(), 300);
@@ -3782,8 +3982,10 @@ function saveWord() {
   }
   const words = getActiveWords();
   if (editingWordIndex === null) {
-    // Add new word
-    words.push({ english: eng, japanese: jpn, level: 'unlearned', correctStreak: 0 });
+    // Add new word at selected position
+    const pos = parseInt(document.getElementById('insertPosition').value) || 0;
+    const newWord = { english: eng, japanese: jpn, level: 'unlearned', correctStreak: 0 };
+    words.splice(pos, 0, newWord);
     showToast('追加しました！');
   } else {
     // Edit existing word
