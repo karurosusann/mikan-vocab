@@ -2066,21 +2066,6 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
   margin-top: 2px;
   word-break: break-word;
 }
-.ew-delete-bg {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 80px;
-  background: var(--red-500);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
 .edit-word-modal .rename-input { margin-bottom: 10px; }
 
 /* Reset button */
@@ -2376,6 +2361,9 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
       <div class="confirm-buttons">
         <button class="confirm-cancel" onclick="closeEditWord()">キャンセル</button>
         <button class="confirm-danger" style="background:var(--orange-500);box-shadow:0 4px 12px rgba(255,140,0,0.3);" onclick="saveWord()">保存</button>
+      </div>
+      <div id="editWordDeleteRow" style="display:none;margin-top:12px;text-align:center;">
+        <button onclick="deleteEditingWord()" style="border:none;background:none;color:var(--red-500);font-size:13px;font-weight:600;cursor:pointer;padding:8px 16px;font-family:inherit;">🗑️ この単語を削除</button>
       </div>
     </div>
   </div>
@@ -4686,60 +4674,15 @@ function renderEditorList() {
   }
 
   el.innerHTML = items.map(({ w, i }) => `
-    <div class="editor-word-item" data-index="${i}">
-      <div class="ew-delete-bg" onclick="deleteWord(${i})">削除</div>
+    <div class="editor-word-item" data-index="${i}" onclick="showEditWordModal(${i})">
       <div class="ew-inner">
-        <div class="ew-content" onclick="showEditWordModal(${i})">
+        <div class="ew-content">
           <div class="ew-eng">${escapeHtml(w.english)}</div>
           <div class="ew-jpn">${escapeHtml(w.japanese)}</div>
         </div>
       </div>
     </div>
   `).join('');
-
-  // Attach swipe handlers
-  el.querySelectorAll('.editor-word-item').forEach(item => {
-    initSwipeToDelete(item);
-  });
-}
-
-// --- Swipe to delete ---
-function initSwipeToDelete(item) {
-  const inner = item.querySelector('.ew-inner');
-  let startX = 0, currentX = 0, swiping = false;
-
-  inner.addEventListener('touchstart', (e) => {
-    startX = e.touches[0].clientX;
-    currentX = 0;
-    swiping = true;
-    inner.style.transition = 'none';
-  }, { passive: true });
-
-  inner.addEventListener('touchmove', (e) => {
-    if (!swiping) return;
-    const dx = e.touches[0].clientX - startX;
-    currentX = Math.min(0, Math.max(-80, dx));
-    inner.style.transform = `translateX(${currentX}px)`;
-  }, { passive: true });
-
-  inner.addEventListener('touchend', () => {
-    if (!swiping) return;
-    swiping = false;
-    inner.style.transition = 'transform 0.25s ease';
-    if (currentX < -40) {
-      inner.style.transform = 'translateX(-80px)';
-    } else {
-      inner.style.transform = 'translateX(0)';
-    }
-  });
-
-  inner.addEventListener('click', (e) => {
-    if (inner.style.transform === 'translateX(-80px)') {
-      e.stopPropagation();
-      e.preventDefault();
-      inner.style.transform = 'translateX(0)';
-    }
-  });
 }
 
 // --- Add word with position ---
@@ -4748,6 +4691,9 @@ function addWordDirect() {
   document.getElementById('editWordTitle').textContent = '単語を追加';
   document.getElementById('editWordEng').value = '';
   document.getElementById('editWordJpn').value = '';
+
+  // Hide delete button for new word
+  document.getElementById('editWordDeleteRow').style.display = 'none';
 
   // Show position selector
   const posRow = document.getElementById('insertPositionRow');
@@ -4790,8 +4736,10 @@ function showEditWordModal(index) {
     options += `<option value="${i + 1}">${i + 1}. ${escapeHtml(label)} の後</option>`;
   });
   posSel.innerHTML = options;
-  // Pre-select current position (item is "after" the previous one, or "先頭" if index 0)
   posSel.value = String(index === 0 ? 0 : index);
+
+  // Show delete button for editing
+  document.getElementById('editWordDeleteRow').style.display = 'block';
 
   const overlay = document.getElementById('editWordOverlay');
   overlay.classList.add('show');
@@ -4849,6 +4797,13 @@ function deleteWord(index) {
     renderEditorList();
     showToast('削除しました');
   }, '削除する');
+}
+
+function deleteEditingWord() {
+  if (editingWordIndex === null) return;
+  const idx = editingWordIndex;
+  closeEditWord();
+  deleteWord(idx);
 }
 
 // ============ RESET ============
