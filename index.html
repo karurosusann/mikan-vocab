@@ -374,13 +374,14 @@ body::after {
   overflow: hidden;
   -webkit-user-select: none;
   user-select: none;
+  touch-action: pan-y;
   padding: 8px 0;
   margin: 0 -20px;
 }
 .deck-carousel-track {
-  display: flex;
-  will-change: transform;
-  align-items: center;
+  position: relative;
+  height: 150px;
+  will-change: contents;
 }
 .deck-card {
   flex-shrink: 0;
@@ -3142,19 +3143,22 @@ const DEMO_DECKS = {
 };
 
 // ============ DECK LIST ============
-// ============ HORIZONTAL DECK CAROUSEL ============
+// ============ HORIZONTAL DECK CAROUSEL (CIRCULAR) ============
 const CARD_W = 142; // card width + margins
 let carouselOffset = 0;
 let carouselVelocity = 0;
 let carouselDragging = false;
 let carouselEventsReady = false;
+// For circular: we track which "logical index" is centered
+let carouselCenterIdx = 0;
 
 function buildDonutSVG(counts, total) {
   const t = total || 1;
   const R = 17, C = 2 * Math.PI * R;
+  // ③ Merge fuzzy+mastered as green
+  const greenPct = (counts.mastered + counts.fuzzy) / t;
   const slices = [
-    { pct: counts.mastered / t, color: '#22C55E' },
-    { pct: counts.fuzzy / t, color: '#FACC15' },
+    { pct: greenPct, color: '#22C55E' },
     { pct: counts.weak / t, color: '#EF4444' },
     { pct: counts.unlearned / t, color: '#D1D5DB' }
   ];
@@ -3163,13 +3167,30 @@ function buildDonutSVG(counts, total) {
   slices.forEach(s => {
     if (s.pct <= 0) return;
     const len = s.pct * C;
+    // ④ No rotate needed: stroke-dashoffset from 12 o'clock (SVG default with no transform)
     circles += `<circle cx="24" cy="24" r="${R}" stroke="${s.color}" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-offset}" />`;
     offset += len;
   });
   if (offset === 0) circles = `<circle cx="24" cy="24" r="${R}" stroke="#D1D5DB" stroke-dasharray="${C} 0" />`;
-  const pct = Math.round((counts.mastered / t) * 100);
+  const pct = Math.round(((counts.mastered + counts.fuzzy) / t) * 100);
+  // ④ rotate(-90deg) starts from 12 o'clock
   return `<svg viewBox="0 0 48 48"><g style="transform:rotate(-90deg);transform-origin:center">${circles}</g></svg>
     <div class="dc-donut-center"><span class="dc-pct">${pct}%</span><span class="dc-pct-label">習得</span></div>`;
+}
+
+// Build the visible card array for circular layout:
+// We render enough cards to fill the viewport, repeating from the circular list
+function getVisibleCards() {
+  if (decks.length === 0) return [];
+  const n = decks.length;
+  // Show up to 7 cards around center (3 left, center, 3 right)
+  const spread = Math.min(3, Math.max(1, Math.ceil(n / 2)));
+  const cards = [];
+  for (let d = -spread; d <= spread; d++) {
+    const realIdx = ((carouselCenterIdx + d) % n + n) % n;
+    cards.push({ deck: decks[realIdx], realIdx, offset: d });
+  }
+  return cards;
 }
 
 function renderDeckList() {
@@ -3177,26 +3198,14 @@ function renderDeckList() {
   const track = document.getElementById('carouselTrack');
   if (!track) return;
 
-  track.innerHTML = decks.map((deck, i) => {
-    const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
-    deck.words.forEach(w => { if (counts[w.level] !== undefined) counts[w.level]++; });
-    const total = deck.words.length;
-    const isActive = deck.id === activeDeckId;
-    return `
-      <div class="deck-card ${isActive ? 'active' : ''}" data-index="${i}" data-id="${deck.id}" onclick="carouselTapCard(${i})">
-        <div class="dc-donut">${buildDonutSVG(counts, total)}</div>
-        <div class="dc-name">${escapeHtml(deck.name)}</div>
-        <div class="dc-meta">${deck.words.length}問</div>
-      </div>
-    `;
-  }).join('');
-
   const activeIdx = decks.findIndex(d => d.id === activeDeckId);
-  carouselOffset = calcCenterOffset(activeIdx >= 0 ? activeIdx : 0);
-  applyCarousel(false);
+  carouselCenterIdx = activeIdx >= 0 ? activeIdx : 0;
+  carouselOffset = 0; // 0 means center card is at center
+
+  rebuildCarouselCards();
 
   const countEl = document.getElementById('deckPickerCount');
-  if (countEl) countEl.textContent = `${(activeIdx >= 0 ? activeIdx : 0) + 1} / ${decks.length}`;
+  if (countEl) countEl.textContent = `${carouselCenterIdx + 1} / ${decks.length}`;
 
   if (!carouselEventsReady) {
     initCarouselEvents();
@@ -3204,77 +3213,97 @@ function renderDeckList() {
   }
 }
 
-function calcCenterOffset(idx) {
-  const vp = document.getElementById('carouselViewport');
-  if (!vp) return 0;
-  const vpW = vp.clientWidth;
-  return -(idx * CARD_W) + (vpW / 2) - (CARD_W / 2);
-}
-
-function applyCarousel(animate) {
+function rebuildCarouselCards() {
   const track = document.getElementById('carouselTrack');
-  if (!track) return;
-  track.style.transition = animate ? 'transform 0.35s cubic-bezier(.23,1,.32,1)' : 'none';
-  track.style.transform = `translateX(${carouselOffset}px)`;
-  updateCarouselCards();
-}
-
-function snapCarousel(animate) {
   const vp = document.getElementById('carouselViewport');
-  if (!vp) return;
+  if (!track || !vp) return;
+
+  const cards = getVisibleCards();
   const vpW = vp.clientWidth;
-  // Find which card is closest to center
-  const center = vpW / 2;
-  let bestIdx = 0, bestDist = Infinity;
-  for (let i = 0; i < decks.length; i++) {
-    const cardCenter = carouselOffset + i * CARD_W + CARD_W / 2;
-    const dist = Math.abs(cardCenter - center);
-    if (dist < bestDist) { bestDist = dist; bestIdx = i; }
-  }
-  carouselOffset = calcCenterOffset(bestIdx);
-  applyCarousel(animate !== false);
+  const centerX = vpW / 2 - CARD_W / 2;
 
-  if (decks[bestIdx] && decks[bestIdx].id !== activeDeckId) {
-    activeDeckId = decks[bestIdx].id;
-    sfxSelect();
-    saveState();
-    updateDashboard();
-  }
-  updateCarouselCards();
-  const countEl = document.getElementById('deckPickerCount');
-  if (countEl) countEl.textContent = `${bestIdx + 1} / ${decks.length}`;
+  track.innerHTML = cards.map(c => {
+    const counts = { unlearned: 0, weak: 0, fuzzy: 0, mastered: 0 };
+    c.deck.words.forEach(w => { if (counts[w.level] !== undefined) counts[w.level]++; });
+    const total = c.deck.words.length;
+    const x = centerX + c.offset * CARD_W + carouselOffset;
+    const isActive = c.offset === 0 && carouselOffset === 0;
+    return `
+      <div class="deck-card ${isActive ? 'active' : ''}" 
+           data-real="${c.realIdx}" data-offset="${c.offset}"
+           onclick="carouselTapCard(${c.realIdx}, ${c.offset})"
+           style="position:absolute;left:${x}px;top:8px;">
+        <div class="dc-donut">${buildDonutSVG(counts, total)}</div>
+        <div class="dc-name">${escapeHtml(c.deck.name)}</div>
+        <div class="dc-meta">${c.deck.words.length}問</div>
+      </div>
+    `;
+  }).join('');
 }
 
-function updateCarouselCards() {
+function applyCarouselTransform(animate) {
   const track = document.getElementById('carouselTrack');
-  if (!track) return;
   const vp = document.getElementById('carouselViewport');
-  if (!vp) return;
-  const center = vp.clientWidth / 2;
-  track.querySelectorAll('.deck-card').forEach((card, i) => {
-    const cardCenter = carouselOffset + i * CARD_W + CARD_W / 2;
-    const dist = Math.abs(cardCenter - center);
-    const isCenter = dist < CARD_W * 0.4;
-    card.classList.toggle('active', isCenter);
+  if (!track || !vp) return;
+
+  const vpW = vp.clientWidth;
+  const centerX = vpW / 2 - CARD_W / 2;
+  const cards = track.querySelectorAll('.deck-card');
+
+  cards.forEach(card => {
+    const d = parseInt(card.dataset.offset);
+    const x = centerX + d * CARD_W + carouselOffset;
+    card.style.transition = animate ? 'left 0.35s cubic-bezier(.23,1,.32,1), transform 0.35s, opacity 0.35s, border-color 0.35s, box-shadow 0.35s' : 'none';
+    card.style.left = x + 'px';
+
+    // Active state based on distance from center
+    const distFromCenter = Math.abs(d * CARD_W + carouselOffset);
+    card.classList.toggle('active', distFromCenter < CARD_W * 0.35);
   });
 }
 
-function carouselTapCard(idx) {
-  // If tapping the already-active card, open deck edit
-  if (decks[idx] && decks[idx].id === activeDeckId) {
-    openDeckEdit(decks[idx].id);
-    return;
+function snapCarousel(animate) {
+  // Find which card offset is closest to center (offset 0)
+  const shiftCards = Math.round(-carouselOffset / CARD_W);
+  const n = decks.length;
+
+  if (shiftCards !== 0) {
+    carouselCenterIdx = ((carouselCenterIdx + shiftCards) % n + n) % n;
+    carouselOffset = 0;
+    rebuildCarouselCards();
+  } else {
+    carouselOffset = 0;
   }
-  carouselOffset = calcCenterOffset(idx);
-  if (decks[idx]) {
-    activeDeckId = decks[idx].id;
+  applyCarouselTransform(animate !== false);
+
+  // Update active deck
+  if (decks[carouselCenterIdx] && decks[carouselCenterIdx].id !== activeDeckId) {
+    activeDeckId = decks[carouselCenterIdx].id;
     sfxSelect();
     saveState();
     updateDashboard();
   }
-  applyCarousel(true);
   const countEl = document.getElementById('deckPickerCount');
-  if (countEl) countEl.textContent = `${idx + 1} / ${decks.length}`;
+  if (countEl) countEl.textContent = `${carouselCenterIdx + 1} / ${decks.length}`;
+}
+
+function carouselTapCard(realIdx, offset) {
+  // Tapping the center card → open edit
+  if (offset === 0 && carouselOffset === 0) {
+    openDeckEdit(decks[realIdx].id);
+    return;
+  }
+  // Otherwise, shift to that card
+  carouselCenterIdx = realIdx;
+  activeDeckId = decks[realIdx].id;
+  sfxSelect();
+  saveState();
+  carouselOffset = 0;
+  rebuildCarouselCards();
+  applyCarouselTransform(true);
+  updateDashboard();
+  const countEl = document.getElementById('deckPickerCount');
+  if (countEl) countEl.textContent = `${realIdx + 1} / ${decks.length}`;
 }
 
 function initCarouselEvents() {
@@ -3282,6 +3311,7 @@ function initCarouselEvents() {
   if (!vp) return;
   let startX = 0, lastX = 0, lastTime = 0, startOff = 0, hasMoved = false;
 
+  // ① Fix: prevent page scroll during horizontal carousel swipe
   vp.addEventListener('touchstart', (e) => {
     carouselDragging = true;
     hasMoved = false;
@@ -3289,32 +3319,28 @@ function initCarouselEvents() {
     lastTime = Date.now();
     startOff = carouselOffset;
     carouselVelocity = 0;
-    const track = document.getElementById('carouselTrack');
-    if (track) track.style.transition = 'none';
   }, { passive: true });
 
   vp.addEventListener('touchmove', (e) => {
     if (!carouselDragging) return;
     const x = e.touches[0].clientX;
-    if (Math.abs(x - startX) > 5) hasMoved = true;
+    const dx = Math.abs(x - startX);
+    if (dx > 8) {
+      hasMoved = true;
+      e.preventDefault(); // ① prevent page scroll
+    }
     const now = Date.now();
     if (now - lastTime > 0) carouselVelocity = (x - lastX) / (now - lastTime);
     lastX = x; lastTime = now;
-    let raw = startOff + (x - startX);
-    // Rubber band
-    const maxOff = calcCenterOffset(0);
-    const minOff = calcCenterOffset(decks.length - 1);
-    if (raw > maxOff) raw = maxOff + (raw - maxOff) * 0.25;
-    else if (raw < minOff) raw = minOff + (raw - minOff) * 0.25;
-    carouselOffset = raw;
-    applyCarousel(false);
-  }, { passive: true });
+    carouselOffset = startOff + (x - startX);
+    applyCarouselTransform(false);
+  }, { passive: false }); // ① must be non-passive to preventDefault
 
-  vp.addEventListener('touchend', (e) => {
+  vp.addEventListener('touchend', () => {
     if (!carouselDragging) return;
     carouselDragging = false;
-    if (!hasMoved) return; // tap handled by onclick
-    carouselOffset += carouselVelocity * 120;
+    if (!hasMoved) return;
+    carouselOffset += carouselVelocity * 100;
     snapCarousel(true);
   });
 
@@ -3327,8 +3353,6 @@ function initCarouselEvents() {
     lastTime = Date.now();
     startOff = carouselOffset;
     carouselVelocity = 0;
-    const track = document.getElementById('carouselTrack');
-    if (track) track.style.transition = 'none';
     const onMove = (ev) => {
       if (!carouselDragging) return;
       const x = ev.clientX;
@@ -3336,27 +3360,22 @@ function initCarouselEvents() {
       const now = Date.now();
       if (now - lastTime > 0) carouselVelocity = (x - lastX) / (now - lastTime);
       lastX = x; lastTime = now;
-      let raw = startOff + (x - startX);
-      const maxOff = calcCenterOffset(0);
-      const minOff = calcCenterOffset(decks.length - 1);
-      if (raw > maxOff) raw = maxOff + (raw - maxOff) * 0.25;
-      else if (raw < minOff) raw = minOff + (raw - minOff) * 0.25;
-      carouselOffset = raw;
-      applyCarousel(false);
+      carouselOffset = startOff + (x - startX);
+      applyCarouselTransform(false);
     };
     const onUp = () => {
       carouselDragging = false;
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
       if (!hasMoved) return;
-      carouselOffset += carouselVelocity * 120;
+      carouselOffset += carouselVelocity * 100;
       snapCarousel(true);
     };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
   });
 
-  // Wheel (horizontal scroll)
+  // Wheel
   vp.addEventListener('wheel', (e) => {
     e.preventDefault();
     const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
@@ -3391,12 +3410,12 @@ function renderReorderList() {
   const list = document.getElementById('reorderList');
   list.innerHTML = decks.map((deck, i) => `
     <div class="reorder-item" data-index="${i}">
-      <div class="ro-name">${escapeHtml(deck.name)}</div>
-      <div class="ro-count">${deck.words.length}問</div>
       <div class="ro-arrows">
         <button class="ro-arrow-btn" onclick="moveDeckInList(${i}, -1)" ${i === 0 ? 'disabled' : ''}>▲</button>
         <button class="ro-arrow-btn" onclick="moveDeckInList(${i}, 1)" ${i === decks.length - 1 ? 'disabled' : ''}>▼</button>
       </div>
+      <div class="ro-name">${escapeHtml(deck.name)}</div>
+      <div class="ro-count">${deck.words.length}問</div>
     </div>
   `).join('');
 }
