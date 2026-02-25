@@ -538,13 +538,7 @@ body::after {
   text-align: center;
   margin-bottom: 16px;
 }
-.deck-edit-name-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-.deck-edit-name-row input {
-  flex: 1;
+.deck-edit-name-ce {
   border: 2px solid var(--gray-200);
   border-radius: 10px;
   padding: 10px 12px;
@@ -553,23 +547,38 @@ body::after {
   font-family: inherit;
   outline: none;
   transition: border-color 0.2s;
+  min-height: 20px;
+  margin-bottom: 10px;
+  -webkit-user-select: text;
+  user-select: text;
+  word-break: break-all;
 }
-.deck-edit-name-row input:focus {
+.deck-edit-name-ce:focus {
   border-color: var(--orange-400);
 }
-.deck-edit-name-row button {
-  padding: 10px 16px;
+.deck-edit-name-ce:empty::before {
+  content: attr(data-placeholder);
+  color: var(--gray-300);
+  pointer-events: none;
+}
+.deck-edit-name-ce br { display: none; }
+.deck-edit-name-ce * { display: inline; }
+.deck-edit-save-btn {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
   border: none;
   border-radius: 10px;
   background: var(--orange-500);
   color: white;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
-  white-space: nowrap;
+  margin-bottom: 16px;
   transition: all 0.2s;
 }
+.deck-edit-save-btn:active { opacity: 0.8; transform: scale(0.98); }
 .deck-edit-actions {
   display: flex;
   flex-direction: column;
@@ -2310,8 +2319,8 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
     <div class="confirm-modal edit-word-modal" onclick="event.stopPropagation()">
       <div class="confirm-icon">✏️</div>
       <h3 id="editWordTitle">単語を編集</h3>
-      <input type="text" id="editWordEng" class="rename-input" placeholder="問題文を入力" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other">
-      <input type="text" id="editWordJpn" class="rename-input" placeholder="答えを入力" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other">
+      <div id="editWordEng" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="問題文を入力"></div>
+      <div id="editWordJpn" class="rename-input rename-editable" contenteditable="true" role="textbox" data-placeholder="答えを入力"></div>
       <div id="insertPositionRow" style="display:none;margin-bottom:14px;">
         <label style="font-size:12px;font-weight:600;color:var(--gray-500);display:block;margin-bottom:6px;">挿入位置</label>
         <select id="insertPosition" class="rename-input" style="margin-bottom:0;padding:10px 12px;font-size:14px;"></select>
@@ -2428,10 +2437,8 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
 <div class="deck-edit-overlay" id="deckEditOverlay" onclick="closeDeckEdit()">
   <div class="deck-edit-modal" onclick="event.stopPropagation()">
     <h3 id="deckEditTitle">📖 デッキを編集</h3>
-    <div class="deck-edit-name-row">
-      <input type="text" id="deckEditNameInput" placeholder="デッキ名" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
-      <button onclick="saveDeckName()">保存</button>
-    </div>
+    <div class="deck-edit-name-ce" id="deckEditNameInput" contenteditable="true" role="textbox" data-placeholder="デッキ名"></div>
+    <button class="deck-edit-save-btn" onclick="saveDeckName()">保存</button>
     <div class="deck-edit-actions">
       <button class="deck-edit-btn" onclick="closeDeckEdit();openReorderModal()"><span class="de-icon">↕️</span> デッキの並べ替え</button>
       <button class="deck-edit-btn danger" onclick="closeDeckEdit();deleteDeck(activeDeckId)"><span class="de-icon">🗑️</span> このデッキを削除</button>
@@ -2493,7 +2500,20 @@ function initAudio() {
 
 function toggleSound() {}
 
-document.addEventListener('DOMContentLoaded', () => {});
+document.addEventListener('DOMContentLoaded', () => {
+  // Prevent rich-text paste in all contenteditable elements
+  document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+    el.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+      document.execCommand('insertText', false, text);
+    });
+    // Prevent Enter creating new lines
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') e.preventDefault();
+    });
+  });
+});
 
 // Unlock and keep audio alive on every user interaction (iOS kills AudioContext in background)
 document.addEventListener('touchstart', initAudio, { passive: true });
@@ -3374,24 +3394,37 @@ function moveDeckInList(fromIdx, direction) {
 function openDeckEdit(id) {
   const deck = decks.find(d => d.id === id);
   if (!deck) return;
-  const input = document.getElementById('deckEditNameInput');
-  input.value = deck.name;
-  input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); saveDeckName(); } };
+  const el = document.getElementById('deckEditNameInput');
+  el.textContent = deck.name;
+  el.onkeydown = (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); el.blur(); saveDeckName(); }
+  };
+  el.onpaste = (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+    document.execCommand('insertText', false, text);
+  };
   document.getElementById('deckEditOverlay').classList.add('show');
-  setTimeout(() => { input.focus(); input.select(); }, 200);
+  setTimeout(() => {
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }, 200);
 }
 
 function closeDeckEdit() {
-  // Blur any focused input first to dismiss iOS keyboard
-  const input = document.getElementById('deckEditNameInput');
-  if (input) input.blur();
+  const el = document.getElementById('deckEditNameInput');
+  if (el) el.blur();
   document.getElementById('deckEditOverlay').classList.remove('show');
 }
 
 function saveDeckName() {
-  const input = document.getElementById('deckEditNameInput');
-  input.blur(); // Dismiss keyboard first
-  const newName = input.value.trim();
+  const el = document.getElementById('deckEditNameInput');
+  el.blur();
+  const newName = el.textContent.trim();
   if (!newName) return;
   const deck = decks.find(d => d.id === activeDeckId);
   if (deck) {
@@ -4573,8 +4606,8 @@ function renderEditorList() {
 function addWordDirect() {
   editingWordIndex = null;
   document.getElementById('editWordTitle').textContent = '単語を追加';
-  document.getElementById('editWordEng').value = '';
-  document.getElementById('editWordJpn').value = '';
+  document.getElementById('editWordEng').textContent = '';
+  document.getElementById('editWordJpn').textContent = '';
 
   // Hide delete button for new word
   document.getElementById('editWordDeleteRow').style.display = 'none';
@@ -4607,8 +4640,8 @@ function showEditWordModal(index) {
   if (!word) return;
   editingWordIndex = index;
   document.getElementById('editWordTitle').textContent = '単語を編集';
-  document.getElementById('editWordEng').value = word.english;
-  document.getElementById('editWordJpn').value = word.japanese;
+  document.getElementById('editWordEng').textContent = word.english;
+  document.getElementById('editWordJpn').textContent = word.japanese;
 
   // Show position selector for moving
   const posRow = document.getElementById('insertPositionRow');
@@ -4635,8 +4668,8 @@ function closeEditWord() {
 }
 
 function saveWord() {
-  const eng = document.getElementById('editWordEng').value.trim();
-  const jpn = document.getElementById('editWordJpn').value.trim();
+  const eng = document.getElementById('editWordEng').textContent.trim();
+  const jpn = document.getElementById('editWordJpn').textContent.trim();
   if (!eng || !jpn) {
     showToast('問題文と答えを両方入力してください');
     return;
