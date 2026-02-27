@@ -2124,9 +2124,9 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
         <span class="deck-carousel-count" id="deckPickerCount">1/1</span>
       </div>
       <div class="deck-list-grid" id="deckListGrid"></div>
-      <div style="margin-top:10px;">
-        <button class="secondary-btn" style="width:100%;" onclick="document.getElementById('fileInputAdd').click()">＋ 新しいCSVを追加</button>
-        <input type="file" id="fileInputAdd" accept=".csv,.txt" multiple style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;" onchange="handleFilesAdd(this.files)">
+      <div style="margin-top:10px;position:relative;">
+        <label for="fileInputAdd" class="secondary-btn" style="width:100%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-sizing:border-box;">＋ 新しいCSVを追加</label>
+        <input type="file" id="fileInputAdd" accept=".csv,.txt" multiple style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;">
       </div>
     </div>
 
@@ -2832,10 +2832,22 @@ function handleFile(file) {
 
 function handleFilesAdd(files) {
   if (!files || !files.length) return;
-  const fileInput = document.getElementById('fileInputAdd');
-  fileInput.value = '';
-  fileInput.blur();
   handleMultipleFiles(files);
+}
+
+// Attach event listener for fileInputAdd (home screen CSV add)
+const fileInputAdd = document.getElementById('fileInputAdd');
+if (fileInputAdd) {
+  fileInputAdd.addEventListener('change', function(e) {
+    if (e.target.files && e.target.files.length) {
+      handleFilesAdd(e.target.files);
+    }
+    e.target.value = '';
+    e.target.blur();
+    if (document.activeElement === e.target) {
+      document.activeElement.blur();
+    }
+  });
 }
 
 function addDeckFromCSV(text, deckName) {
