@@ -3652,7 +3652,8 @@ function startNextQuiz() {
     results: [],
     totalCount: pool.length,
     masteredCount: 0,
-    beforeLevels: beforeLevels
+    beforeLevels: beforeLevels,
+    drillWrongSet: new Set()
   };
 
   showScreen('quiz');
@@ -3689,7 +3690,8 @@ function startMissedReview() {
     results: [],
     totalCount: pool.length,
     masteredCount: 0,
-    beforeLevels: beforeLevels
+    beforeLevels: beforeLevels,
+    drillWrongSet: new Set()
   };
 
   showScreen('quiz');
@@ -3793,7 +3795,8 @@ function startQuiz() {
     results: [],
     totalCount: pool.length,
     masteredCount: 0,
-    beforeLevels: beforeLevels
+    beforeLevels: beforeLevels,
+    drillWrongSet: new Set()
   };
 
   showScreen('quiz');
@@ -3941,7 +3944,11 @@ function answerKnowledge(known) {
     sfxCorrect();
     currentQuiz.correct++;
     if (!reviewMode) {
-      if (word.level === 'unlearned') {
+      if (quizDrillMode && currentQuiz.drillWrongSet.has(word.english)) {
+        // Drill mode: word was wrong before in this session → stay weak, just count as mastered for progress
+        word.level = 'weak';
+        word.correctStreak = 0;
+      } else if (word.level === 'unlearned') {
         word.level = 'fuzzy';
         word.correctStreak = 1;
       } else if (word.level === 'weak') {
@@ -3951,6 +3958,7 @@ function answerKnowledge(known) {
         word.level = 'mastered';
         word.correctStreak = 2;
       }
+      // mastered stays mastered (no change needed)
     }
     currentQuiz.results.push({ word, correct: true });
     if (quizDrillMode) currentQuiz.masteredCount++;
@@ -3962,6 +3970,11 @@ function answerKnowledge(known) {
       word.correctStreak = 0;
     }
     currentQuiz.results.push({ word, correct: false });
+
+    // Track wrong answers in drill mode
+    if (quizDrillMode) {
+      currentQuiz.drillWrongSet.add(word.english);
+    }
 
     // Drill mode: re-queue the word later
     if (quizDrillMode) {
@@ -3986,9 +3999,15 @@ function answerChoice(btn, index, isCorrect) {
     btn.classList.add('correct');
     sfxCorrect();
     currentQuiz.correct++;
-    word.correctStreak = (word.correctStreak || 0) + 1;
-    if (word.correctStreak >= 2) word.level = 'mastered';
-    else if (word.correctStreak >= 1) word.level = 'fuzzy';
+    if (quizDrillMode && currentQuiz.drillWrongSet.has(word.english)) {
+      // Drill mode: word was wrong before in this session → stay weak
+      word.level = 'weak';
+      word.correctStreak = 0;
+    } else {
+      word.correctStreak = (word.correctStreak || 0) + 1;
+      if (word.correctStreak >= 2) word.level = 'mastered';
+      else if (word.correctStreak >= 1) word.level = 'fuzzy';
+    }
     currentQuiz.results.push({ word, correct: true });
   } else {
     btn.classList.add('wrong');
@@ -4000,6 +4019,11 @@ function answerChoice(btn, index, isCorrect) {
       if (b.textContent === word.japanese) b.classList.add('show-correct');
     });
     currentQuiz.results.push({ word, correct: false });
+
+    // Track wrong answers in drill mode
+    if (quizDrillMode) {
+      currentQuiz.drillWrongSet.add(word.english);
+    }
   }
 
   saveState();
@@ -4044,8 +4068,23 @@ function showResult() {
   }, 500);
   sfxComplete();
   const q = currentQuiz;
-  const totalAnswered = quizDrillMode ? q.totalCount : q.words.length;
-  const pct = Math.round((q.correct / totalAnswered) * 100);
+
+  // In drill mode, count unique words only (not re-queued attempts)
+  let displayCorrect, displayWrong, totalAnswered;
+  if (quizDrillMode) {
+    totalAnswered = q.totalCount;
+    // Words that were never wrong = correct on first try
+    const uniqueWordsSet = new Set();
+    q.words.forEach(w => uniqueWordsSet.add(w.english));
+    const wrongUniqueCount = q.drillWrongSet.size;
+    displayCorrect = totalAnswered - wrongUniqueCount;
+    displayWrong = wrongUniqueCount;
+  } else {
+    totalAnswered = q.words.length;
+    displayCorrect = q.correct;
+    displayWrong = q.wrong;
+  }
+  const pct = Math.round((displayCorrect / totalAnswered) * 100);
 
   let emoji, msg;
   if (pct >= 90) { emoji = '🎉'; msg = 'すばらしい！'; }
@@ -4139,14 +4178,14 @@ function showResult() {
     <button class="result-close-btn" onclick="showScreen('dashboard'); renderDeckList(); updateDashboard();">✕</button>
     <div class="result-icon">${emoji}</div>
     <h2>${msg}</h2>
-    <p>${totalAnswered}問中 ${q.correct}問正解</p>
+    <p>${totalAnswered}問中 ${displayCorrect}問正解</p>
     <div class="result-stats">
       <div class="result-stat">
-        <div class="num" style="color:var(--green-500)">${q.correct}</div>
+        <div class="num" style="color:var(--green-500)">${displayCorrect}</div>
         <div class="label">正解</div>
       </div>
       <div class="result-stat">
-        <div class="num" style="color:var(--red-500)">${q.wrong}</div>
+        <div class="num" style="color:var(--red-500)">${displayWrong}</div>
         <div class="label">不正解</div>
       </div>
       <div class="result-stat">
