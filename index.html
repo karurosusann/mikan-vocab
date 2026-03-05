@@ -3615,6 +3615,7 @@ function showLockedMessage() {
 // ============ QUIZ SETUP ============
 let quizDrillMode = false;
 let reviewMode = false;
+let lastMainQuizCount = 10; // remembers the count from non-review quizzes
 let reverseMode = false;
 let ttsMode = 'answer'; // 'question', 'answer', 'both', 'none'
 let quizOrder = 'asc'; // 'asc', 'desc', 'random'
@@ -3635,9 +3636,8 @@ function startNextQuiz() {
     pool = pool.reverse();
   }
 
-  // Use the same count as last quiz
-  const lastCount = currentQuiz ? currentQuiz.totalCount : 10;
-  const count = Math.min(lastCount, pool.length);
+  // Use the saved main quiz count (not the review session count)
+  const count = Math.min(lastMainQuizCount, pool.length);
   pool = pool.slice(0, count);
 
   // Save original levels before quiz
@@ -3782,6 +3782,7 @@ function startQuiz() {
   const countSel = document.getElementById('quizCount').value;
   const count = countSel === 'all' ? pool.length : Math.min(parseInt(countSel), pool.length);
   pool = pool.slice(0, count);
+  lastMainQuizCount = count; // remember for "次の問題へ"
 
   // Save original levels before quiz
   const beforeLevels = {};
