@@ -982,6 +982,50 @@ body::after {
 .quiz-card.revealed .answer-text-area { display: block; }
 .quiz-card.revealed { cursor: default; }
 
+/* ===== Swipe feedback ===== */
+.quiz-card.swiping {
+  transition: none !important;
+  will-change: transform;
+}
+.quiz-card.swipe-fly {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+.swipe-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 10;
+  transition: opacity 0.05s ease;
+}
+.swipe-overlay .swipe-label {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  padding: 10px 28px;
+  border-radius: 14px;
+  border: 4px solid;
+  transform: rotate(-15deg);
+}
+.swipe-overlay.swipe-right-overlay {
+  background: rgba(34,197,94,0.10);
+}
+.swipe-overlay.swipe-right-overlay .swipe-label {
+  color: var(--green-600);
+  border-color: var(--green-400);
+}
+.swipe-overlay.swipe-left-overlay {
+  background: rgba(59,130,246,0.10);
+}
+.swipe-overlay.swipe-left-overlay .swipe-label {
+  color: var(--blue-500);
+  border-color: var(--blue-400);
+  transform: rotate(15deg);
+}
 /* Bookmark button */
 .bookmark-btn {
   width: 44px;
@@ -2300,6 +2344,8 @@ input[type="search"].rename-input::-webkit-search-cancel-button { -webkit-appear
       <div class="quiz-progress-fill" id="quizProgressFill"></div>
     </div>
     <div class="quiz-card" id="quizCard" onclick="revealAnswer()">
+      <div class="swipe-overlay swipe-right-overlay" id="swipeRightOverlay"><span class="swipe-label">知ってる</span></div>
+      <div class="swipe-overlay swipe-left-overlay" id="swipeLeftOverlay"><span class="swipe-label">知らない</span></div>
       <div class="level-badge" id="quizBadge">未学習</div>
       <div class="english-word" id="quizWord"></div>
       <div class="answer-reveal" id="answerReveal"></div>
@@ -3843,6 +3889,15 @@ function showQuizQuestion() {
   // Reset card state
   const card = document.getElementById('quizCard');
   card.classList.remove('revealed');
+  card.style.transform = '';
+  card.style.opacity = '';
+  card.classList.remove('swiping', 'swipe-fly');
+  // Reset swipe overlays
+  const swRO = document.getElementById('swipeRightOverlay');
+  const swLO = document.getElementById('swipeLeftOverlay');
+  if (swRO) swRO.style.opacity = '0';
+  if (swLO) swLO.style.opacity = '0';
+  swipeEnabled = false;
   
   // Update bookmark button in card
   const bkmBtn = document.getElementById('bookmarkBtn');
@@ -3892,6 +3947,8 @@ function autoSizeQuizWord(el) {
 function revealAnswer() {
   const card = document.getElementById('quizCard');
   if (!currentQuiz) return;
+  // Don't trigger reveal if a swipe just completed
+  if (swipeState && swipeState.answered) return;
   const word = currentQuiz.words[currentQuiz.index];
 
   // Already revealed — re-read aloud on tap
@@ -3918,6 +3975,10 @@ function revealAnswer() {
     btns.style.opacity = '1';
     btns.style.pointerEvents = 'auto';
   }
+  // Enable swipe in flashcard mode
+  if (quizMode === 'flashcard') {
+    swipeEnabled = true;
+  }
 }
 
 function toggleBookmark() {
@@ -3928,6 +3989,176 @@ function toggleBookmark() {
   btn.classList.toggle('active', word.bookmarked);
   saveState();
 }
+
+/* ===== Swipe to answer (Mikan-style, touch only) ===== */
+let swipeEnabled = false;
+let swipeState = null;
+
+(function initSwipe() {
+  const SWIPE_THRESHOLD = 80; // px to trigger
+  const MAX_ROTATION = 12;    // degrees
+
+  function onTouchStart(e) {
+    if (!swipeEnabled) return;
+    const card = document.getElementById('quizCard');
+    if (!card.classList.contains('revealed')) return;
+    if (quizMode !== 'flashcard') return;
+
+    const rect = card.getBoundingClientRect();
+    const touch = e.touches[0];
+    if (touch.clientX < rect.left || touch.clientX > rect.right ||
+        touch.clientY < rect.top || touch.clientY > rect.bottom) return;
+
+    swipeState = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      cardWidth: rect.width,
+      active: true,
+      answered: false
+    };
+    card.classList.add('swiping');
+  }
+
+  function onTouchMove(e) {
+    if (!swipeState || !swipeState.active) return;
+    const card = document.getElementById('quizCard');
+    const touch = e.touches[0];
+    const dx = touch.clientX - swipeState.startX;
+    const dy = touch.clientY - swipeState.startY;
+
+    if (Math.abs(dy) > Math.abs(dx) * 1.5 && Math.abs(dx) < 30) return;
+    if (Math.abs(dx) > 10) e.preventDefault();
+
+    const maxDx = swipeState.cardWidth * 0.6;
+    const clampedDx = Math.max(-maxDx, Math.min(maxDx, dx));
+    const progress = clampedDx / maxDx;
+    const rotation = progress * MAX_ROTATION;
+
+    card.style.transform = `translateX(${clampedDx}px) rotate(${rotation}deg)`;
+
+    const rightOverlay = document.getElementById('swipeRightOverlay');
+    const leftOverlay = document.getElementById('swipeLeftOverlay');
+    if (progress > 0) {
+      rightOverlay.style.opacity = Math.min(progress * 1.5, 1);
+      leftOverlay.style.opacity = '0';
+    } else {
+      leftOverlay.style.opacity = Math.min(-progress * 1.5, 1);
+      rightOverlay.style.opacity = '0';
+    }
+  }
+
+  function onTouchEnd(e) {
+    if (!swipeState || !swipeState.active) return;
+    const card = document.getElementById('quizCard');
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - swipeState.startX;
+
+    card.classList.remove('swiping');
+
+    if (Math.abs(dx) >= SWIPE_THRESHOLD && !swipeState.answered) {
+      swipeState.answered = true;
+      swipeEnabled = false;
+      const known = dx > 0;
+      const flyX = dx > 0 ? swipeState.cardWidth : -swipeState.cardWidth;
+
+      card.classList.add('swipe-fly');
+      card.style.transform = `translateX(${flyX}px) rotate(${dx > 0 ? 20 : -20}deg)`;
+      card.style.opacity = '0';
+
+      setTimeout(() => {
+        card.classList.remove('swipe-fly');
+        card.style.transform = '';
+        card.style.opacity = '';
+        const rightOverlay = document.getElementById('swipeRightOverlay');
+        const leftOverlay = document.getElementById('swipeLeftOverlay');
+        if (rightOverlay) rightOverlay.style.opacity = '0';
+        if (leftOverlay) leftOverlay.style.opacity = '0';
+        answerKnowledge(known);
+      }, 250);
+    } else {
+      card.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+      card.style.transform = '';
+      const rightOverlay = document.getElementById('swipeRightOverlay');
+      const leftOverlay = document.getElementById('swipeLeftOverlay');
+      if (rightOverlay) rightOverlay.style.opacity = '0';
+      if (leftOverlay) leftOverlay.style.opacity = '0';
+      setTimeout(() => { card.style.transition = ''; }, 260);
+    }
+
+    swipeState = null;
+  }
+
+  document.addEventListener('touchstart', onTouchStart, { passive: true });
+  document.addEventListener('touchmove', onTouchMove, { passive: false });
+  document.addEventListener('touchend', onTouchEnd, { passive: true });
+})();
+
+/* ===== Keyboard shortcuts for quiz ===== */
+(function initKeyboard() {
+  let keyLocked = false; // prevent rapid-fire
+
+  document.addEventListener('keydown', function(e) {
+    // Only act when quiz screen is active
+    const quizScreen = document.getElementById('screen-quiz');
+    if (!quizScreen || !quizScreen.classList.contains('active')) return;
+    if (!currentQuiz) return;
+
+    const card = document.getElementById('quizCard');
+    const isRevealed = card && card.classList.contains('revealed');
+
+    // Enter / Space — reveal answer (same as tapping the card)
+    if (e.key === 'Enter' || e.key === ' ') {
+      if (!isRevealed) {
+        e.preventDefault();
+        revealAnswer();
+      }
+      return;
+    }
+
+    // Arrow keys — only after answer is revealed, flashcard mode
+    if (isRevealed && quizMode === 'flashcard' && !keyLocked) {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        keyLocked = true;
+        keyAnswerWithAnimation(true, card);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        keyLocked = true;
+        keyAnswerWithAnimation(false, card);
+      }
+    }
+  });
+
+  function keyAnswerWithAnimation(known, card) {
+    swipeEnabled = false;
+    const direction = known ? 1 : -1;
+    const cardWidth = card.getBoundingClientRect().width;
+
+    // Show overlay briefly
+    const rightOverlay = document.getElementById('swipeRightOverlay');
+    const leftOverlay = document.getElementById('swipeLeftOverlay');
+    if (known) {
+      if (rightOverlay) rightOverlay.style.opacity = '1';
+    } else {
+      if (leftOverlay) leftOverlay.style.opacity = '1';
+    }
+
+    // Fly-out animation
+    card.classList.add('swipe-fly');
+    card.style.transform = `translateX(${direction * cardWidth}px) rotate(${direction * 20}deg)`;
+    card.style.opacity = '0';
+
+    setTimeout(() => {
+      card.classList.remove('swipe-fly');
+      card.style.transform = '';
+      card.style.opacity = '';
+      if (rightOverlay) rightOverlay.style.opacity = '0';
+      if (leftOverlay) leftOverlay.style.opacity = '0';
+      keyLocked = false;
+      answerKnowledge(known);
+    }, 250);
+  }
+})();
 
 function generateChoices(targetWord) {
   const correct = targetWord.japanese;
