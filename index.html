@@ -3443,6 +3443,15 @@ function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${name}`).classList.add('active');
   window.scrollTo(0, 0);
+  // Lock body scroll on fullscreen quiz/result screens
+  if (name === 'quiz' || name === 'result') {
+    document.body.style.overflow = 'hidden';
+    document.body.style.height = '100vh';
+    document.body.style.height = '100dvh';
+  } else {
+    document.body.style.overflow = '';
+    document.body.style.height = '';
+  }
   if (name === 'advanced-settings') {
     applyAdvancedSettingsUI();
   }
